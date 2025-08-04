@@ -120,14 +120,15 @@ public class Space {
 
     public void reload() {
         dummyManager.reset();
-        bossBarManager.reset();
         for (ServerPlayerEntity player : new ArrayList<>(playWorld.getPlayers())) {
+            bossBarManager.clearBossBars(player);
             if (info.isOwnerOrDeveloper(player.getUuid())) {
                 ModeManager.move(player, ModeManager.Mode.CODE, this);
             } else {
                 ModeManager.move(player, ModeManager.Mode.LOBBY, this);
             }
         }
+        bossBarManager.reset();
         evaluator.stop();
         playWorld.getChunkManager().chunkLoadingManager.unloadChunks(() -> true);
         evaluator = new CodeEvaluator(this);
