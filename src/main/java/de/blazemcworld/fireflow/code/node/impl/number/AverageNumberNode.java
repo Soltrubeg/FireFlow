@@ -2,12 +2,12 @@ package de.blazemcworld.fireflow.code.node.impl.number;
 
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.NumberType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class AverageNumberNode extends Node {
 
     public AverageNumberNode() {
-        super("average_number", "Average Number", "Returns the average number of a set.", Items.RAW_COPPER);
+        super("average_number", "Average Number", "Returns the average number of a set.", Material.RAW_COPPER);
 
         Varargs<Double> numbers = new Varargs<>("numbers", "Numbers", NumberType.INSTANCE);
         Output<Double> result = new Output<>("result", "Result", NumberType.INSTANCE);

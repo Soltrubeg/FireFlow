@@ -3,14 +3,14 @@ package de.blazemcworld.fireflow.code.node.impl.number;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.StringType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 import java.util.Random;
 
 public class GaussianDistributionNode extends Node {
 
     public GaussianDistributionNode() {
-        super("gaussian_distribution", "Gaussian Distribution", "Generate a normally distributed random number", Items.POLAR_BEAR_SPAWN_EGG);
+        super("gaussian_distribution", "Gaussian Distribution", "Generate a normally distributed random number", Material.POLAR_BEAR_SPAWN_EGG);
         Input<String> mode = new Input<>("mode", "Mode", StringType.INSTANCE)
                 .options("Normal", "Folded");
         Input<Double> mean = new Input<>("mean", "μ (Mean midpoint)", NumberType.INSTANCE);

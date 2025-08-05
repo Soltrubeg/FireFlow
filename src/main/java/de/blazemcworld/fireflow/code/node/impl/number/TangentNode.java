@@ -3,11 +3,11 @@ package de.blazemcworld.fireflow.code.node.impl.number;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.StringType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class TangentNode extends Node {
     public TangentNode() {
-        super("tangent", "Tangent", "Generates the trigonometric tangent function of a number.", Items.HORN_CORAL_FAN);
+        super("tangent", "Tangent", "Generates the trigonometric tangent function of a number.", Material.HORN_CORAL_FAN);
         Input<Double> value = new Input<>("value", "Value", NumberType.INSTANCE);
         Input<String> mode = new Input<>("mode", "Mode", StringType.INSTANCE).options("tan","tanh","atan");
         Input<String> inputUnit = new Input<>("input_unit", "Input Unit", StringType.INSTANCE).options("Degrees","Radians");

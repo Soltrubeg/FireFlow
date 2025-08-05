@@ -2,12 +2,12 @@ package de.blazemcworld.fireflow.code.node.impl.number;
 
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.NumberType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class MaxNumberNode extends Node {
 
     public MaxNumberNode() {
-        super("max_number", "Maximum Number", "Returns the highest number in a set.", Items.NETHERITE_SCRAP);
+        super("max_number", "Maximum Number", "Returns the highest number in a set.", Material.NETHERITE_SCRAP);
 
         Varargs<Double> numbers = new Varargs<>("numbers", "Numbers", NumberType.INSTANCE);
         Output<Double> result = new Output<>("result", "Result", NumberType.INSTANCE);
