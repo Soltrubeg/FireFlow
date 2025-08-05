@@ -206,6 +206,7 @@ public class NodeList {
                         .add(new Category("Gameplay", Material.GRASS_BLOCK)
                                 .add(new ClearPlayerEffectsNode())
                                 .add(new DamagePlayerNode())
+                                .add(new GetPlayerInputNode())
                                 .add(new GivePlayerEffectNode())
                                 .add(new IsPlayerInvulnerableNode())
                                 .add(new KillPlayerNode())
