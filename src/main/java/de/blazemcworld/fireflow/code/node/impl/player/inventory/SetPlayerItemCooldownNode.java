@@ -6,13 +6,13 @@ import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.PlayerType;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.value.PlayerValue;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.Material;
 
 public class SetPlayerItemCooldownNode extends Node {
 
     public SetPlayerItemCooldownNode() {
-        super("set_player_item_cooldown", "Set Player Item Cooldown", "Sets a cooldown for a specific item for a player", Items.CHORUS_FRUIT);
+        super("set_player_item_cooldown", "Set Player Item Cooldown", "Sets a cooldown for a specific item for a player", Material.CHORUS_FRUIT);
 
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
         Input<PlayerValue> player = new Input<>("player", "Player", PlayerType.INSTANCE);
@@ -25,7 +25,7 @@ public class SetPlayerItemCooldownNode extends Node {
             player.getValue(ctx).tryUse(ctx, p -> {
                 ItemStack cooldownItem = item.getValue(ctx);
                 int cooldownTicks = ticks.getValue(ctx).intValue();
-                p.getItemCooldownManager().set(cooldownItem, cooldownTicks);
+                p.setCooldown(cooldownItem, cooldownTicks);
             });
             ctx.sendSignal(next);
         });

@@ -6,14 +6,14 @@ import de.blazemcworld.fireflow.code.node.SingleGenericNode;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.type.StringType;
 import de.blazemcworld.fireflow.code.type.WireType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class SetVariableNode<T> extends SingleGenericNode<T> {
 
     public SetVariableNode(WireType<T> type) {
         super(
                 "set_variable", type == null ? "Set Variable" : "Set " + type.getName() + " Variable",
-                "Changes the value of a variable.", Items.IRON_BLOCK, type
+                "Changes the value of a variable.", Material.IRON_BLOCK, type
         );
 
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);

@@ -3,12 +3,12 @@ package de.blazemcworld.fireflow.code.node.impl.number;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.StringType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class ParseNumberNode extends Node {
     
     public ParseNumberNode() {
-        super("parse_number", "Parse Number", "Converts a string to a number", Items.IRON_INGOT);
+        super("parse_number", "Parse Number", "Converts a string to a number", Material.IRON_INGOT);
 
         Input<String> string = new Input<>("string", "String", StringType.INSTANCE);
         Output<Double> number = new Output<>("number", "Number", NumberType.INSTANCE);

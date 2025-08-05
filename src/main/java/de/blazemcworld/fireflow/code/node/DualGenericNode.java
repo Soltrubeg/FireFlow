@@ -2,7 +2,7 @@ package de.blazemcworld.fireflow.code.node;
 
 import de.blazemcworld.fireflow.code.type.AllTypes;
 import de.blazemcworld.fireflow.code.type.WireType;
-import net.minecraft.item.Item;
+import org.bukkit.Material;
 
 import java.util.List;
 
@@ -10,7 +10,7 @@ public abstract class DualGenericNode<T, U> extends Node {
     protected final WireType<T> type1;
     protected final WireType<U> type2;
 
-    protected DualGenericNode(String id, String name, String description, Item icon, WireType<T> type1, WireType<U> type2) {
+    protected DualGenericNode(String id, String name, String description, Material icon, WireType<T> type1, WireType<U> type2) {
         super(id, name, description, icon);
         this.type1 = type1;
         this.type2 = type2;

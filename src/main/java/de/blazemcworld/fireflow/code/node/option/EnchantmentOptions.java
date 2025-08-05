@@ -1,14 +1,15 @@
 package de.blazemcworld.fireflow.code.node.option;
 
-import de.blazemcworld.fireflow.FireFlow;
 import de.blazemcworld.fireflow.code.CodeInteraction;
 import de.blazemcworld.fireflow.code.widget.ChoiceWidget;
 import de.blazemcworld.fireflow.code.widget.NodeIOWidget;
 import de.blazemcworld.fireflow.code.widget.WidgetVec;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.util.Identifier;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
+import org.bukkit.NamespacedKey;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -18,8 +19,8 @@ public class EnchantmentOptions implements InputOptions {
     private final List<String> effects = new ArrayList<>();
 
     private EnchantmentOptions() {
-        for (Identifier id : FireFlow.server.getRegistryManager().getOrThrow(RegistryKeys.ENCHANTMENT).getIds()) {
-            effects.add(id.getPath());
+        for (Iterator<NamespacedKey> it = RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT).keyStream().iterator(); it.hasNext(); ) {
+            effects.add(it.next().value());
         }
         effects.sort(String::compareTo);
     }

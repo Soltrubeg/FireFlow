@@ -1,17 +1,19 @@
 package de.blazemcworld.fireflow.code.node.impl.event.combat.entity;
 
-import de.blazemcworld.fireflow.code.CodeEvaluator;
 import de.blazemcworld.fireflow.code.CodeThread;
+import de.blazemcworld.fireflow.code.EventContext;
+import de.blazemcworld.fireflow.code.node.EventNode;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.EntityType;
 import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.type.StringType;
 import de.blazemcworld.fireflow.code.value.EntityValue;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityDamageEvent;
 
-public class OnEntityHurtNode extends Node {
+public class OnEntityHurtNode extends Node implements EventNode {
 
     private final Output<Void> signal;
     private final Output<EntityValue> entity;
@@ -19,7 +21,7 @@ public class OnEntityHurtNode extends Node {
     private final Output<String> type;
 
     public OnEntityHurtNode() {
-        super("on_entity_hurt", "On Entity Hurt", "Emits a signal when an entity is about to take damage.", Items.REDSTONE_ORE);
+        super("on_entity_hurt", "On Entity Hurt", "Emits a signal when an entity is about to take damage.", Material.REDSTONE_ORE);
 
         signal = new Output<>("signal", "Signal", SignalType.INSTANCE);
         entity = new Output<>("entity", "entity", EntityType.INSTANCE);
@@ -30,16 +32,16 @@ public class OnEntityHurtNode extends Node {
         type.valueFromScope();
     }
 
-    public void onEntityHurt(CodeEvaluator codeEvaluator, LivingEntity entity, float damage, String type, CodeThread.EventContext ctx) {
-        CodeThread thread = codeEvaluator.newCodeThread();
-        thread.context = ctx;
-        thread.setScopeValue(this.entity, new EntityValue(entity));
-        thread.setScopeValue(this.amount, (double) damage);
-        thread.setScopeValue(this.type, type);
+    @Override
+    public void handleEvent(EventContext context) {
+        if (!(context.event instanceof EntityDamageEvent e && !(e.getEntity() instanceof Player))) return;
+
+        CodeThread thread = context.newCodeThread();
+        thread.setScopeValue(this.entity, new EntityValue(e.getEntity()));
+        thread.setScopeValue(this.amount, e.getDamage());
         thread.sendSignal(signal);
         thread.clearQueue();
     }
-
     @Override
     public Node copy() {
         return new OnEntityHurtNode();

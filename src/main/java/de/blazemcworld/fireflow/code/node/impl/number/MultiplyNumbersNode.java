@@ -2,12 +2,12 @@ package de.blazemcworld.fireflow.code.node.impl.number;
 
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.NumberType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class MultiplyNumbersNode extends Node {
     
     public MultiplyNumbersNode() {
-        super("multiply_numbers", "Multiply Numbers", "Multiplies multiple numbers together", Items.SMITHING_TABLE);
+        super("multiply_numbers", "Multiply Numbers", "Multiplies multiple numbers together", Material.SMITHING_TABLE);
         
         Input<Double> left = new Input<>("left", "Left", NumberType.INSTANCE);
         Varargs<Double> right = new Varargs<>("right", "Right", NumberType.INSTANCE);

@@ -2,12 +2,12 @@ package de.blazemcworld.fireflow.code.node.impl.number;
 
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.NumberType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class RemainderNode extends Node {
 
     public RemainderNode() {
-        super("remainder_number", "Remainder", "Calculates the remainder of two numbers", Items.BONE);
+        super("remainder_number", "Remainder", "Calculates the remainder of two numbers", Material.BONE);
 
         Input<Double> left = new Input<>("left", "Left", NumberType.INSTANCE);
         Input<Double> right = new Input<>("right", "Right", NumberType.INSTANCE);

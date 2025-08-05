@@ -3,12 +3,12 @@ package de.blazemcworld.fireflow.code.node.impl.control;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.SignalType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class RepeatNode extends Node {
     
     public RepeatNode() {
-        super("repeat", "Repeat", "Emits a signal a given amount of times.", Items.REPEATER);
+        super("repeat", "Repeat", "Emits a signal a given amount of times.", Material.REPEATER);
 
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
         Input<Double> times = new Input<>("times", "Times", NumberType.INSTANCE);

@@ -4,18 +4,17 @@ import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.AnyType;
 import de.blazemcworld.fireflow.code.type.StringType;
 import de.blazemcworld.fireflow.code.value.AnyValue;
-import net.minecraft.item.Items;
-
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.bukkit.Material;
 
 public class StringLayoutNode extends Node {
 
     private static final Pattern pattern = Pattern.compile("\\{\\d+(:\\w+)*}");
 
     public StringLayoutNode() {
-        super("string_layout", "String Layout", "Combines multiple strings into one given a specific layout. Use {1} for the first value in the layout, {2} for the second, etc.", Items.TRIPWIRE_HOOK);
+        super("string_layout", "String Layout", "Combines multiple strings into one given a specific layout. Use {1} for the first value in the layout, {2} for the second, etc.", Material.TRIPWIRE_HOOK);
 
         Input<String> layout = new Input<>("layout", "Layout", StringType.INSTANCE);
         Varargs<AnyValue<?>> values = new Varargs<>("values", "Values", AnyType.INSTANCE);

@@ -4,14 +4,14 @@ import de.blazemcworld.fireflow.code.VariableStore;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.ConditionType;
 import de.blazemcworld.fireflow.code.type.StringType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class VariableExistsNode extends Node {
 
     public VariableExistsNode() {
         super(
                 "variable_exists", "Variable Exists",
-                "Checks if a variable with a name exists in a scope.", Items.IRON_ORE
+                "Checks if a variable with a name exists in a scope.", Material.IRON_ORE
         );
 
         Input<String> name = new Input<>("name", "Name", StringType.INSTANCE);

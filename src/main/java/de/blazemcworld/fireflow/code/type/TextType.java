@@ -3,37 +3,17 @@ package de.blazemcworld.fireflow.code.type;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import de.blazemcworld.fireflow.FireFlow;
-import net.kyori.adventure.platform.modcommon.MinecraftServerAudiences;
-import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
-import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
-import net.minecraft.item.Items;
-import net.minecraft.text.PlainTextContent;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Formatting;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Material;
 
-public class TextType extends WireType<Text> {
+public class TextType extends WireType<Component> {
 
     public static final TextType INSTANCE = new TextType();
 
-    public static final MiniMessage MM = MiniMessage.builder()
-            .tags(TagResolver.builder().resolvers(
-                    StandardTags.color(),
-                    StandardTags.decorations(),
-                    StandardTags.font(),
-                    StandardTags.gradient(),
-                    StandardTags.keybind(),
-                    StandardTags.newline(),
-                    StandardTags.rainbow(),
-                    StandardTags.reset(),
-                    StandardTags.transition(),
-                    StandardTags.translatable(),
-                    StandardTags.hoverEvent()
-            ).build()).build();
-
     private TextType() {
-        super("text", TextColor.fromFormatting(Formatting.LIGHT_PURPLE), Items.BOOK);
+        super("text", NamedTextColor.LIGHT_PURPLE, Material.BOOK);
     }
 
     @Override
@@ -42,52 +22,52 @@ public class TextType extends WireType<Text> {
     }
 
     @Override
-    public Text defaultValue() {
-        return Text.empty();
+    public Component defaultValue() {
+        return Component.empty();
     }
 
     @Override
-    public Text parseInset(String str) {
-        return MinecraftServerAudiences.of(FireFlow.server).asNative(MM.deserialize(str));
+    public Component parseInset(String str) {
+        return FireFlow.MM.deserialize(str);
     }
 
     @Override
-    protected String stringifyInternal(Text value, String mode) {
+    protected String stringifyInternal(Component value, String mode) {
         return switch (mode) {
             case "plain" -> getPlainContent(value);
-            default -> MM.serialize(MinecraftServerAudiences.of(FireFlow.server).asAdventure(value));
+            default -> FireFlow.MM.serialize(value);
         };
     }
 
-    private static String getPlainContent(Text text) {
+    private static String getPlainContent(Component text) {
         StringBuilder out = new StringBuilder();
-        if (text.getContent() instanceof PlainTextContent.Literal(String literal)) {
-            out.append(literal);
+        if (text instanceof TextComponent plain) {
+            out.append(plain.content());
         }
-        for (Text child : text.getSiblings()) {
+        for (Component child : text.children()) {
             out.append(getPlainContent(child));
         }
         return out.toString();
     }
 
     @Override
-    public Text checkType(Object obj) {
-        if (obj instanceof Text comp) return comp;
+    public Component checkType(Object obj) {
+        if (obj instanceof Component comp) return comp;
         return null;
     }
 
     @Override
-    public JsonElement toJson(Text obj) {
-        return new JsonPrimitive(MM.serialize(MinecraftServerAudiences.of(FireFlow.server).asAdventure(obj)));
+    public JsonElement toJson(Component obj) {
+        return new JsonPrimitive(FireFlow.MM.serialize(obj));
     }
 
     @Override
-    public Text fromJson(JsonElement json) {
-        return MinecraftServerAudiences.of(FireFlow.server).asNative(MM.deserialize(json.getAsString()));
+    public Component fromJson(JsonElement json) {
+        return FireFlow.MM.deserialize(json.getAsString());
     }
 
     @Override
-    public boolean valuesEqual(Text a, Text b) {
+    public boolean valuesEqual(Component a, Component b) {
         return stringifyInternal(a, "display").equals(stringifyInternal(b, "display"));
     }
 
@@ -97,7 +77,7 @@ public class TextType extends WireType<Text> {
     }
 
     @Override
-    protected Text convertInternal(WireType<?> other, Object v) {
-        return Text.literal(other.stringify(v, "display"));
+    protected Component convertInternal(WireType<?> other, Object v) {
+        return Component.text(other.stringify(v, "display"));
     }
 }

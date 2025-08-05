@@ -1,43 +1,27 @@
 package de.blazemcworld.fireflow.code.type;
 
-import com.google.common.io.ByteArrayDataInput;
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
-import com.google.gson.JsonObject;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.Dynamic;
+import com.google.gson.JsonPrimitive;
 import de.blazemcworld.fireflow.FireFlow;
-import net.minecraft.MinecraftVersion;
-import net.minecraft.datafixer.TypeReferences;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.NbtSizeTracker;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.Base64;
-import java.util.Optional;
+import java.util.logging.Level;
 
 public class ItemType extends WireType<ItemStack> {
 
     public static final ItemType INSTANCE = new ItemType();
-    private static final int currentDataFixer = MinecraftVersion.CURRENT.getSaveVersion().getId();
 
     private ItemType() {
-        super("item", TextColor.fromFormatting(Formatting.GRAY), Items.ITEM_FRAME);
+        super("item", NamedTextColor.GRAY, Material.ITEM_FRAME);
     }
 
     @Override
     public ItemStack defaultValue() {
-        return new ItemStack(Items.AIR);
+        return new ItemStack(Material.AIR);
     }
 
     @Override
@@ -50,48 +34,34 @@ public class ItemType extends WireType<ItemStack> {
     public JsonElement toJson(ItemStack item) {
         if (item.isEmpty()) return JsonNull.INSTANCE;
         try {
-            NbtElement nbt = item.toNbt(FireFlow.server.getRegistryManager());
-            ByteArrayDataOutput out = ByteStreams.newDataOutput();
-            NbtIo.write(nbt, out);
-            JsonObject json = new JsonObject();
-            json.addProperty("data", new String(Base64.getEncoder().encode(out.toByteArray())));
-            json.addProperty("version", currentDataFixer);
-            return json;
+            return new JsonPrimitive(new String(Base64.getEncoder().encode(item.serializeAsBytes())));
         } catch (Exception err) {
-            FireFlow.LOGGER.error("Failed to serialize item", err);
+            FireFlow.logger.log(Level.WARNING, "Failed to serialize item", err);
             return JsonNull.INSTANCE;
         }
     }
 
     @Override
     public ItemStack fromJson(JsonElement json) {
-        if (json.isJsonNull()) return new ItemStack(Items.AIR);
+        if (json.isJsonNull()) return new ItemStack(Material.AIR);
         try {
-            JsonObject obj = json.getAsJsonObject();
-            ByteArrayDataInput inp = ByteStreams.newDataInput(Base64.getDecoder().decode(obj.get("data").getAsString()));
-            NbtElement nbt = NbtIo.read(inp, NbtSizeTracker.of(1024 * 1024 * 2));
-            int version = obj.get("version").getAsInt();
-            if (version != currentDataFixer) {
-                nbt = FireFlow.server.getDataFixer().update(TypeReferences.ITEM_STACK, new Dynamic<>(NbtOps.INSTANCE, nbt), version, currentDataFixer).getValue();
-            }
-            return ItemStack.fromNbt(FireFlow.server.getRegistryManager(), nbt).orElseGet(() -> new ItemStack(Items.AIR));
+            return ItemStack.deserializeBytes(Base64.getDecoder().decode(json.getAsString()));
         } catch (Exception err) {
-            FireFlow.LOGGER.error("Failed to deserialize item", err);
-            return new ItemStack(Items.AIR);
+            FireFlow.logger.log(Level.WARNING, "Failed to deserialize item", err);
+            return new ItemStack(Material.AIR);
         }
     }
 
     @Override
     public boolean valuesEqual(ItemStack a, ItemStack b) {
-        return ItemStack.areEqual(a, b);
+        return a.equals(b);
     }
 
     @Override
     public ItemStack parseInset(String str) {
-        DataResult<Identifier> id = Identifier.validate(str);
-        if (id.isError()) return null;
-        Optional<Item> item = Registries.ITEM.getOptionalValue(id.getOrThrow());
-        return item.map(ItemStack::new).orElse(null);
+        Material m = Material.getMaterial(str);
+        if (m == null || !m.isItem()) return null;
+        return new ItemStack(m);
     }
 
     @Override
@@ -102,9 +72,9 @@ public class ItemType extends WireType<ItemStack> {
     @Override
     protected String stringifyInternal(ItemStack value, String mode) {
         return switch (mode) {
-            case "id", "type", "material" -> Registries.ITEM.getId(value.getItem()).getPath();
-            case "count" -> String.valueOf(value.getCount());
-            default -> Registries.ITEM.getId(value.getItem()).getPath() + " x" + value.getCount();
+            case "id", "type", "material" -> value.getType().key().value();
+            case "count" -> String.valueOf(value.getAmount());
+            default -> value.getType().key().value() + " x" + value.getAmount();
         };
     }
 
@@ -116,10 +86,9 @@ public class ItemType extends WireType<ItemStack> {
     @Override
     public ItemStack convert(WireType<?> other, Object v) {
         if (v instanceof String str) {
-            DataResult<Identifier> id = Identifier.validate(str);
-            if (id.isError()) return new ItemStack(Items.AIR);
-            return new ItemStack(Registries.ITEM.getOptionalValue(id.getOrThrow()).orElse(Items.AIR));
+            ItemStack i = parseInset(str);
+            if (i != null) return i;
         }
-        return new ItemStack(Items.AIR);
+        return new ItemStack(Material.AIR);
     }
 }

@@ -5,10 +5,9 @@ import de.blazemcworld.fireflow.code.node.SingleGenericNode;
 import de.blazemcworld.fireflow.code.type.ListType;
 import de.blazemcworld.fireflow.code.type.WireType;
 import de.blazemcworld.fireflow.code.value.ListValue;
-import net.minecraft.item.Items;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.bukkit.Material;
 
 public class RemoveListDuplicatesNode<T> extends SingleGenericNode<T> {
 
@@ -17,7 +16,7 @@ public class RemoveListDuplicatesNode<T> extends SingleGenericNode<T> {
             "remove_list_duplicates",
             type == null ? "Remove List Duplicates" : "Remove " + type.getName() + " List Duplicates",
             "Removes duplicate values from the list while preserving the order of first occurrence and returns a list containing only unique values.",
-            Items.HOPPER,
+            Material.HOPPER,
             type
         );
 

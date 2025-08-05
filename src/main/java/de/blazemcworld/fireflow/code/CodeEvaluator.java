@@ -1,34 +1,25 @@
 package de.blazemcworld.fireflow.code;
 
 import com.google.gson.JsonObject;
+import de.blazemcworld.fireflow.code.node.EventNode;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.node.Node.Varargs;
-import de.blazemcworld.fireflow.code.node.impl.event.*;
-import de.blazemcworld.fireflow.code.node.impl.event.action.*;
-import de.blazemcworld.fireflow.code.node.impl.event.combat.*;
-import de.blazemcworld.fireflow.code.node.impl.event.combat.entity.*;
-import de.blazemcworld.fireflow.code.node.impl.event.meta.*;
-import de.blazemcworld.fireflow.code.node.impl.event.world.*;
+import de.blazemcworld.fireflow.code.node.impl.event.meta.DebugEventNode;
+import de.blazemcworld.fireflow.code.node.impl.event.meta.OnInitializeNode;
+import de.blazemcworld.fireflow.code.node.impl.event.meta.OnPlayerJoinNode;
+import de.blazemcworld.fireflow.code.node.impl.event.meta.OnPlayerLeaveNode;
 import de.blazemcworld.fireflow.code.node.impl.function.FunctionCallNode;
 import de.blazemcworld.fireflow.code.node.impl.function.FunctionDefinition;
 import de.blazemcworld.fireflow.code.node.impl.function.FunctionInputsNode;
 import de.blazemcworld.fireflow.code.node.impl.function.FunctionOutputsNode;
+import de.blazemcworld.fireflow.code.node.impl.player.visual.SetPlayerSkinNode;
 import de.blazemcworld.fireflow.code.widget.NodeWidget;
 import de.blazemcworld.fireflow.code.widget.Widget;
 import de.blazemcworld.fireflow.code.widget.WidgetVec;
-import de.blazemcworld.fireflow.space.PlayWorld;
 import de.blazemcworld.fireflow.space.Space;
-import de.blazemcworld.fireflow.util.DummyPlayer;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.packet.s2c.play.ParticleS2CPacket;
-import net.minecraft.particle.DustParticleEffect;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import org.bukkit.Particle;
+import org.bukkit.World;
+import org.bukkit.entity.Player;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -37,14 +28,21 @@ import java.util.Set;
 
 public class CodeEvaluator {
 
+    private static final long CPU_MAX = 20_000_000;
+    private static final long CPU_BONUS_MAX = 5_000_000;
+    private static final long CPU_BONUS_STEP = 100_000;
+
     public final Space space;
     private boolean stopped = false;
     public final VariableStore sessionVariables = new VariableStore();
-    public Set<Node> nodes;
-    public final PlayWorld world;
+    private Set<Node> nodes;
+    private Set<EventNode> eventNodes;
+    public final World world;
     private final Set<Runnable> tickTasks = new HashSet<>();
     private boolean initCalled = false;
     private int revision = 0; // Incremented after each live reload
+    private long cpuUsage = 0;
+    private long cpuBonusGranted = 0;
 
     public CodeEvaluator(Space space) {
         this.space = space;
@@ -58,6 +56,7 @@ public class CodeEvaluator {
         }
 
         this.nodes = copyNodes(nodes);
+        updateEventNodes();
     }
 
     public void stop() {
@@ -151,32 +150,10 @@ public class CodeEvaluator {
         return new HashSet<>(old2new.values());
     }
 
-    public CodeThread newCodeThread() {
-        return new CodeThread(this);
-    }
-
-    public boolean onSwingHand(ServerPlayerEntity player, boolean isMainHand) {
-        boolean cancel = false;
-        for (Node node : nodes) {
-            if (node instanceof OnPlayerSwingHandNode n) {
-                cancel = n.onSwingHand(this, player, isMainHand, cancel);
-            }
-        }
-        return cancel;
-    }
-
-    public boolean onSwapHands(ServerPlayerEntity player) {
-        boolean cancel = false;
-        for (Node node : nodes) {
-            if (node instanceof OnPlayerSwapHandsNode n) {
-                cancel = n.onSwapHands(this, player, cancel);
-            }
-        }
-        return cancel;
-    }
-
     public void tick() {
         if (stopped) return;
+        cpuUsage = 0;
+        cpuBonusGranted = 0;
         Set<Runnable> tasks;
         synchronized (tickTasks) {
             tasks = new HashSet<>(tickTasks);
@@ -185,109 +162,12 @@ public class CodeEvaluator {
         for (Runnable task : tasks) task.run();
     }
 
-    public boolean onInteractBlock(ServerPlayerEntity player, BlockPos pos, Direction side, Hand hand) {
-        boolean cancel = false;
-        for (Node node : nodes) {
-            if (node instanceof OnPlayerInteractBlockNode n) {
-                cancel = n.onInteractBlock(this, player, pos, side, hand, cancel);
-            }
-        }
-        return cancel;
-    }
+    public void exitPlay(Player player) {
+        EventContext ctx = new EventContext(this);
+        ctx.customEvent = new OnPlayerLeaveNode.LeaveEvent(player);
+        emitEvent(ctx);
 
-    public boolean onUseItem(ServerPlayerEntity player, ItemStack stack, Hand hand) {
-        boolean cancel = false;
-        for (Node node : nodes) {
-            if (node instanceof OnPlayerUseItemNode n) {
-                cancel = n.onUseItem(this, player, stack, hand, cancel);
-            }
-        }
-        return cancel;
-    }
-
-    public void exitPlay(ServerPlayerEntity player) {
-        for (Node node : nodes) {
-            if (node instanceof OnPlayerLeaveNode n) {
-                n.onLeave(this, player);
-            }
-        }
-        if (player instanceof DummyPlayer dummy && !dummy.exitCalled) {
-            dummy.exitCalled = true;
-            dummy.discard();
-        }
-    }
-
-    public boolean onPlaceBlock(ItemPlacementContext context) {
-        boolean cancel = false;
-        for (Node node : nodes) {
-            if (node instanceof OnPlayerPlaceBlockNode n) {
-                cancel = n.onPlaceBlock(this, context, cancel);
-            }
-        }
-        return cancel;
-    }
-
-    public boolean onChat(ServerPlayerEntity player, String message) {
-        boolean cancel = false;
-        for (Node node : nodes) {
-            if (node instanceof OnPlayerChatNode n) {
-                cancel = n.onChat(this, player, message, cancel);
-            }
-        }
-        return cancel;
-    }
-
-    public boolean onBreakBlock(ServerPlayerEntity player, BlockPos pos) {
-        boolean cancel = false;
-        for (Node node : nodes) {
-            if (node instanceof OnPlayerBreakBlockNode n) {
-                cancel = n.onBreakBlock(this, player, pos, cancel);
-            }
-        }
-        return cancel;
-    }
-
-    public boolean onDropItem(ServerPlayerEntity player) {
-        boolean cancel = false;
-        for (Node node : nodes) {
-            if (node instanceof OnPlayerDropItemNode n) {
-                cancel = n.onDropItem(this, player, cancel);
-            }
-        }
-        return cancel;
-    }
-
-    public boolean allowDeath(LivingEntity target, DamageSource source, float damage) {
-        boolean cancel = false;
-
-        String type = source.getTypeRegistryEntry().getKey().map(k -> k.getValue().getPath()).orElse("unknown");
-
-        for (Node node : nodes) {
-            if (node instanceof OnPlayerDeathNode n && target instanceof ServerPlayerEntity pl) {
-                cancel = n.onPlayerDeath(this, pl, damage, type, cancel);
-            }
-
-            if (node instanceof OnEntityDeathNode n && !(target instanceof ServerPlayerEntity)) {
-                cancel = n.onEntityDeath(this, target, damage, type, cancel);
-            }
-
-            if (node instanceof OnPlayerKillPlayerNode n && target instanceof ServerPlayerEntity victim && source.getAttacker() instanceof ServerPlayerEntity attacker) {
-                cancel = n.onPlayerKillPlayer(this, attacker, victim, damage, cancel);
-            }
-
-            if (node instanceof OnPlayerKillEntityNode n && !(target instanceof ServerPlayerEntity) && source.getAttacker() instanceof ServerPlayerEntity attacker) {
-                cancel = n.onPlayerKillEntity(this, attacker, target, damage, cancel);
-            }
-
-            if (node instanceof OnEntityKillPlayerNode n && target instanceof ServerPlayerEntity victim && !(source.getAttacker() instanceof ServerPlayerEntity)) {
-                cancel = n.onEntityKillPlayer(this, source.getAttacker(), victim, damage, cancel);
-            }
-
-            if (node instanceof OnEntityKillEntityNode n && !(target instanceof ServerPlayerEntity) && !(source.getAttacker() instanceof ServerPlayerEntity)) {
-                cancel = n.onEntityKillEntity(this, source.getAttacker(), target, damage, cancel);
-            }
-        }
-        return !cancel;
+        SetPlayerSkinNode.reset(player);
     }
 
     public void nextTick(Runnable r) {
@@ -299,90 +179,32 @@ public class CodeEvaluator {
     private void ensureInit() {
         if (!initCalled) {
             initCalled = true;
-            world.markStarted();
 
-            for (Node node : nodes) {
-                if (node instanceof OnInitializeNode init) {
-                    init.emit(this);
-                }
-            }
+            EventContext ctx = new EventContext(this);
+            ctx.customEvent = OnInitializeNode.EVENT;
+            emitEvent(ctx);
         }
     }
 
-    public void onJoin(ServerPlayerEntity player) {
-        for (Node n : nodes) {
-            if (n instanceof OnPlayerJoinNode join) {
-                join.onJoin(this, player);
-            }
+    public void emitEvent(EventContext ctx) {
+        for (EventNode node : eventNodes) {
+            node.handleEvent(ctx);
         }
     }
 
-    public boolean shouldCancelFlight(ServerPlayerEntity player, boolean enabled) {
-        boolean cancel = false;
-        for (Node n : nodes) {
-            if (enabled && n instanceof OnPlayerStartFlyingNode fly) {
-                cancel = fly.onStartFlying(this, player, cancel);
-            }
-            if (!enabled && n instanceof OnPlayerStopFlyingNode fly) {
-                cancel = fly.onStopFlying(this, player, cancel);
-            }
-        }
-        return cancel;
-    }
-
-    public float adjustDamage(LivingEntity target, DamageSource source, float damage) {
-        String type = source.getTypeRegistryEntry().getKey().map(k -> k.getValue().getPath()).orElse("unknown");
-        CodeThread.EventContext ctx = new CodeThread.EventContext(CodeThread.EventType.DAMAGE_EVENT);
-        ctx.eventNumber = damage;
-
-        for (Node node : nodes) {
-            if (node instanceof OnPlayerHurtNode n && target instanceof ServerPlayerEntity pl) {
-                n.onPlayerHurt(this, pl, damage, type, ctx);
-            }
-
-            if (node instanceof OnEntityHurtNode n && !(target instanceof ServerPlayerEntity)) {
-                n.onEntityHurt(this, target, damage, type, ctx);
-            }
-
-            if (node instanceof OnPlayerAttackPlayerNode n && target instanceof ServerPlayerEntity victim && source.getAttacker() instanceof ServerPlayerEntity attacker) {
-                n.onPlayerAttackPlayer(this, attacker, victim, damage, ctx);
-            }
-
-            if (node instanceof OnPlayerAttackEntityNode n && !(target instanceof ServerPlayerEntity) && source.getAttacker() instanceof ServerPlayerEntity attacker) {
-                n.onPlayerAttackEntity(this, attacker, target, damage, ctx);
-            }
-
-            if (node instanceof OnEntityAttackPlayerNode n && target instanceof ServerPlayerEntity victim && !(source.getAttacker() instanceof ServerPlayerEntity)) {
-                n.onEntityAttackPlayer(this, source.getAttacker(), victim, damage, ctx);
-            }
-
-            if (node instanceof OnEntityAttackEntityNode n && !(target instanceof ServerPlayerEntity) && !(source.getAttacker() instanceof ServerPlayerEntity)) {
-                n.onEntityAttackEntity(this, source.getAttacker(), target, damage, ctx);
-            }
-        }
-
-        if (ctx.cancelled) return -1;
-        return (float) ctx.eventNumber;
-    }
-
-    public void onChunkLoad(int x, int z) {
-        ensureInit();
-        for (Node node : nodes) {
-            if (node instanceof OnChunkLoadNode onChunkLoadNode) {
-                onChunkLoadNode.emit(this, x, z);
-            }
-        }
+    public void onJoin(Player player) {
+        EventContext ctx = new EventContext(this);
+        ctx.customEvent = new OnPlayerJoinNode.JoinEvent(player);
+        emitEvent(ctx);
     }
 
     public void triggerDebug(String id, EditOrigin origin) {
         ensureInit();
-        boolean found = false;
-        for (Node node : nodes) {
-            if (node instanceof DebugEventNode debugEventNode) {
-                found = debugEventNode.trigger(this, id) || found;
-            }
-        }
-        if (!found) origin.sendError("No debug event with id '" + id + "' found.");
+        EventContext ctx = new EventContext(this);
+        DebugEventNode.DebugEvent event = new DebugEventNode.DebugEvent(id);
+        ctx.customEvent = new DebugEventNode.DebugEvent(id);
+        emitEvent(ctx);
+        if (!event.found) origin.sendError("No debug event with id '" + id + "' found.");
     }
 
     public void visualizeDebug(Node node) {
@@ -391,15 +213,7 @@ public class CodeEvaluator {
             if (widget == null) return;
 
             WidgetVec pos = widget.pos();
-            ParticleS2CPacket packet = new ParticleS2CPacket(
-                    new DustParticleEffect(0xFFFF00, 1f),
-                    false, false, pos.x(), pos.y(), 15.9,
-                    0, 0, 0, 0, 1
-            );
-
-            for (ServerPlayerEntity player : space.editor.world.getPlayers()) {
-                player.networkHandler.sendPacket(packet);
-            }
+            space.editor.world.spawnParticle(Particle.DUST.builder().color(0xFFFF00).particle(), pos.loc(), 1);
 
             JsonObject json = new JsonObject();
             json.addProperty("type", "debug");
@@ -419,7 +233,16 @@ public class CodeEvaluator {
                 }
             }
             this.nodes = copyNodes(widgets);
+            updateEventNodes();
         });
+    }
+
+    private void updateEventNodes() {
+        Set<EventNode> updated = new HashSet<>();
+        for (Node node : nodes) {
+            if (node instanceof EventNode en) updated.add(en);
+        }
+        eventNodes = updated;
     }
 
     public void syncRevision(Node old) {
@@ -471,59 +294,19 @@ public class CodeEvaluator {
         old.evalRevision = revision;
     }
 
-    public boolean onLoseFood(ServerPlayerEntity player, int oldValue, int newValue) {
-        CodeThread.EventContext ctx = new CodeThread.EventContext(CodeThread.EventType.UNSPECIFIED);
-
-        for (Node node : nodes) {
-            if (node instanceof OnPlayerLoseFoodNode onLoseFoodNode) {
-                onLoseFoodNode.emit(this, player, oldValue, newValue, ctx);
-            }
-        }
-
-        return ctx.cancelled;
+    public int cpuPercentage() {
+        return Math.clamp(cpuUsage * 100 / CPU_MAX, 0, 100);
     }
 
-    public boolean onLoseSaturation(ServerPlayerEntity player, float oldValue, float newValue) {
-        CodeThread.EventContext ctx = new CodeThread.EventContext(CodeThread.EventType.UNSPECIFIED);
-
-        for (Node node : nodes) {
-            if (node instanceof OnPlayerLoseSaturationNode onLoseSaturationNode) {
-                onLoseSaturationNode.emit(this, player, oldValue, newValue, ctx);
-            }
-        }
-
-        return ctx.cancelled;
+    public void cpuUsed(long usage) {
+        cpuUsage += usage;
     }
 
-    public void onStartSneaking(ServerPlayerEntity player) {
-        for (Node node : nodes) {
-            if (node instanceof OnPlayerStartSneakingNode sneak) {
-                sneak.emit(this, player);
-            }
-        }
+    public boolean shouldWait() {
+        return cpuUsage > CPU_MAX + cpuBonusGranted;
     }
 
-    public void onStopSneaking(ServerPlayerEntity player) {
-        for (Node node : nodes) {
-            if (node instanceof OnPlayerStopSneakingNode sneak) {
-                sneak.emit(this, player);
-            }
-        }
-    }
-
-    public void onStartSprinting(ServerPlayerEntity player) {
-        for (Node node : nodes) {
-            if (node instanceof OnPlayerStartSprintingNode sprint) {
-                sprint.emit(this, player);
-            }
-        }
-    }
-
-    public void onStopSprinting(ServerPlayerEntity player) {
-        for (Node node : nodes) {
-            if (node instanceof OnPlayerStopSprintingNode sprint) {
-                sprint.emit(this, player);
-            }
-        }
+    public void grantCpuBonus() {
+        cpuBonusGranted = Math.min(Math.max(0, cpuUsage - CPU_MAX + CPU_BONUS_STEP), CPU_BONUS_MAX);
     }
 }

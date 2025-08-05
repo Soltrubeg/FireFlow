@@ -7,7 +7,7 @@ import de.blazemcworld.fireflow.code.type.ListType;
 import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.WireType;
 import de.blazemcworld.fireflow.code.value.ListValue;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class ListValuesEqualsNode<T> extends SingleGenericNode<T> {
 
@@ -15,7 +15,7 @@ public class ListValuesEqualsNode<T> extends SingleGenericNode<T> {
         super("list_values_equal", 
               type == null ? "List Values Equal" : type.getName() + " List Values Equal", 
               "Checks if the current value at the specified index in the list equals the given value.", 
-              Items.COMPARATOR, 
+              Material.COMPARATOR, 
               type);
 
         Input<ListValue<T>> list = new Input<>("list", "List", ListType.of(type));

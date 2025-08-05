@@ -4,12 +4,13 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.text.PlainTextContent;
-import net.minecraft.text.Text;
+import de.blazemcworld.fireflow.FireFlow;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.TextDecoration;
 
 import java.io.IOException;
-import java.nio.file.Files;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,8 +20,8 @@ public class TextWidth {
     private static Info missing;
 
     public static void init() {
-        try {
-            String raw = Files.readString(FabricLoader.getInstance().getModContainer("fireflow").orElseThrow().findPath("fontwidth.json").orElseThrow());
+        try (InputStream stream = FireFlow.instance.getResource("fontwidth.json")) {
+            String raw = new String(stream.readAllBytes());
 
             JsonObject parsed = JsonParser.parseString(raw).getAsJsonObject();
 
@@ -34,18 +35,20 @@ public class TextWidth {
         }
     }
 
-    public static double calculate(Text text) {
+    public static double calculate(Component text) {
         return calculate(text, false);
     }
 
-    public static double calculate(Text text, boolean bold) {
-        bold = text.getStyle().bold == Boolean.TRUE || (text.getStyle().bold == null && bold);
+    public static double calculate(Component text, boolean bold) {
+        if (text.style().decoration(TextDecoration.BOLD) != TextDecoration.State.NOT_SET) {
+            bold = text.style().decoration(TextDecoration.BOLD) == TextDecoration.State.TRUE;
+        }
 
         double width = 0;
-        if (text.getContent() instanceof PlainTextContent t) {
-            width += calculate(t.string(), bold);
+        if (text instanceof TextComponent plain) {
+            width += calculate(plain.content(), bold);
         }
-        for (Text child : text.getSiblings()) {
+        for (Component child : text.children()) {
             width += calculate(child, bold);
         }
         return width;

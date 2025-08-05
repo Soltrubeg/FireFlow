@@ -12,13 +12,12 @@ import de.blazemcworld.fireflow.code.widget.WidgetVec;
 import de.blazemcworld.fireflow.space.Space;
 import de.blazemcworld.fireflow.space.SpaceInfo;
 import de.blazemcworld.fireflow.space.SpaceManager;
-import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.Style;
+import org.bukkit.entity.Player;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
@@ -32,11 +31,12 @@ import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.server.ServerWebSocketContainer;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
 
 public class WebEditor extends Handler.Abstract {
 
@@ -59,7 +59,7 @@ public class WebEditor extends Handler.Abstract {
                 boolean upgraded = container.upgrade((rq, rs, cb) -> new WebUser(), request, response, callback);
                 if (upgraded) return true;
             } catch (Exception e) {
-                FireFlow.LOGGER.error("Failed to upgrade to websocket!", e);
+                FireFlow.logger.log(Level.WARNING, "Failed to upgrade to websocket!", e);
             }
             Response.writeError(request, response, callback, HttpStatus.UPGRADE_REQUIRED_426);
             return true;
@@ -90,7 +90,9 @@ public class WebEditor extends Handler.Abstract {
     }
 
     private String readResource(String file) throws IOException {
-        return Files.readString(FabricLoader.getInstance().getModContainer("fireflow").orElseThrow().findPath("web/" + file).orElseThrow());
+        try (InputStream stream = FireFlow.instance.getResource("web/" + file)) {
+            return new String(stream.readAllBytes());
+        }
     }
 
     @WebSocket
@@ -128,7 +130,7 @@ public class WebEditor extends Handler.Abstract {
                     if (editor == null) tick();
                 }
             } catch (Exception e) {
-                FireFlow.LOGGER.error("Failed to parse payload from web editor!", e);
+                FireFlow.logger.log(Level.WARNING, "Failed to parse payload from web editor!", e);
                 Session connection = this.connection;
                 if (connection == null) return;
                 connection.close();
@@ -152,14 +154,14 @@ public class WebEditor extends Handler.Abstract {
                 editor = space.editor;
 
                 editor.enterCode(origin);
-                for (ServerPlayerEntity player : space.getPlayers()) {
-                    if (!space.info.isOwnerOrDeveloper(player.getUuid())) continue;
-                    player.sendMessage(Text.literal("Someone opened the web editor for this space.").formatted(Formatting.YELLOW));
-                    player.sendMessage(Text.literal("Click this to allow access, otherwise ignore it.").setStyle(
-                            Style.EMPTY.withClickEvent(new ClickEvent.RunCommand("/authorize-web " + id))
-                                    .withHoverEvent(new HoverEvent.ShowText(Text.literal("Warning: Only do this if you know and trust the person who opened the web editor!")
-                                            .formatted(Formatting.RED)))
-                                    .withFormatting(Formatting.GOLD)
+                for (Player player : space.getPlayers()) {
+                    if (!space.info.isOwnerOrDeveloper(player.getUniqueId())) continue;
+                    player.sendMessage(Component.text("Someone opened the web editor for this space.").color(NamedTextColor.YELLOW));
+                    player.sendMessage(Component.text("Click this to allow access, otherwise ignore it.").style(
+                            Style.empty().clickEvent(ClickEvent.runCommand("/authorize-web " + id))
+                                    .hoverEvent(HoverEvent.showText(Component.text("Warning: Only do this if you know and trust the person who opened the web editor!")
+                                            .color(NamedTextColor.RED)))
+                                    .color(NamedTextColor.GOLD)
                     ));
                 }
                 return;
@@ -172,7 +174,7 @@ public class WebEditor extends Handler.Abstract {
                 case "move-cursor" -> {
                     float x = json.get("x").getAsFloat();
                     float y = json.get("y").getAsFloat();
-                    if (x > 512 || x < -512 || y > editor.world.getTopYInclusive() || y < editor.world.getBottomY()) {
+                    if (x > 512 || x < -512 || y > editor.world.getMaxHeight() || y < editor.world.getMinHeight()) {
                         cursor = null;
                         return;
                     }
@@ -348,7 +350,7 @@ public class WebEditor extends Handler.Abstract {
                         });
                     }
                 } catch (Exception e) {
-                    FireFlow.LOGGER.error("Failed to handle payload from web editor!", e);
+                    FireFlow.logger.log(Level.WARNING, "Failed to handle payload from web editor!", e);
                     Session connection = this.connection;
                     if (connection == null) return;
                     connection.close();

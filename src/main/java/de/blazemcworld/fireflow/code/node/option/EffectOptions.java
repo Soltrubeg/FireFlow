@@ -4,10 +4,11 @@ import de.blazemcworld.fireflow.code.CodeInteraction;
 import de.blazemcworld.fireflow.code.widget.ChoiceWidget;
 import de.blazemcworld.fireflow.code.widget.NodeIOWidget;
 import de.blazemcworld.fireflow.code.widget.WidgetVec;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -17,8 +18,8 @@ public class EffectOptions implements InputOptions {
     private final List<String> effects = new ArrayList<>();
 
     private EffectOptions() {
-        for (Identifier id : Registries.STATUS_EFFECT.getIds()) {
-            effects.add(id.getPath());
+        for (Iterator<NamespacedKey> it = Registry.POTION.keyStream().iterator(); it.hasNext(); ) {
+            effects.add(it.next().value());
         }
         effects.sort(String::compareTo);
     }

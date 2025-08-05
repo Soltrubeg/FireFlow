@@ -6,12 +6,12 @@ import de.blazemcworld.fireflow.code.type.ListType;
 import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.WireType;
 import de.blazemcworld.fireflow.code.value.ListValue;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class TrimListNode<T> extends SingleGenericNode<T> {
 
     public TrimListNode(WireType<T> type) {
-        super("trim_list", type == null ? "Trim List" : "Trim " + type.getName() + " List", "Removes all null values from a list.", Items.SHEARS, type);
+        super("trim_list", type == null ? "Trim List" : "Trim " + type.getName() + " List", "Removes all null values from a list.", Material.SHEARS, type);
 
         Input<ListValue<T>> list = new Input<>("list", "List", ListType.of(type));
         Input<Double> start = new Input<>("start", "Start", NumberType.INSTANCE);

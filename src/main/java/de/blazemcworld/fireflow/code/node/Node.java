@@ -8,7 +8,7 @@ import de.blazemcworld.fireflow.code.type.StringType;
 import de.blazemcworld.fireflow.code.type.WireType;
 import de.blazemcworld.fireflow.code.value.ListValue;
 import de.blazemcworld.fireflow.code.widget.NodeWidget;
-import net.minecraft.item.Item;
+import org.bukkit.Material;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 public abstract class Node {
 
     public final String id;
-    public final Item icon;
+    public final Material icon;
     public final String name;
     public final String description;
     public List<Input<?>> inputs = new ArrayList<>();
@@ -33,7 +33,7 @@ public abstract class Node {
     public String evalUUID = UUID.randomUUID().toString();
     public int evalRevision = 0;
 
-    protected Node(String id, String name, String description, Item icon) {
+    protected Node(String id, String name, String description, Material icon) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -136,7 +136,7 @@ public abstract class Node {
 
         public void setInset(String value) {
             inset = value;
-            if (!type.canConvert(StringType.INSTANCE) || !inlineFormat.matcher(inset).find()) connected = null;
+            if (!type.canConvert(StringType.INSTANCE) || (inset != null && !inlineFormat.matcher(inset).find())) connected = null;
             if (varargsParent != null) varargsParent.update();
             if (inset == null && options != null) inset = options.fallback();
         }
@@ -147,7 +147,8 @@ public abstract class Node {
             } else if (canUnderstand(output.type)) {
                 connected = output;
             } else {
-                FireFlow.LOGGER.warn("Called input.connect() with invalid wire type!");
+                FireFlow.logger.warning("Called input.connect() with invalid wire type!");
+                Thread.dumpStack();
             }
             if (connected != null && inset != null && (!type.canConvert(StringType.INSTANCE) || !inlineFormat.matcher(inset).find())) inset = null;
             if (varargsParent != null) varargsParent.update();

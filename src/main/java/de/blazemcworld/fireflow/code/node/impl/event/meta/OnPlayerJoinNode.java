@@ -1,21 +1,22 @@
 package de.blazemcworld.fireflow.code.node.impl.event.meta;
 
-import de.blazemcworld.fireflow.code.CodeEvaluator;
 import de.blazemcworld.fireflow.code.CodeThread;
+import de.blazemcworld.fireflow.code.EventContext;
+import de.blazemcworld.fireflow.code.node.EventNode;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.PlayerType;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.value.PlayerValue;
-import net.minecraft.item.Items;
-import net.minecraft.server.network.ServerPlayerEntity;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
 
-public class OnPlayerJoinNode extends Node {
+public class OnPlayerJoinNode extends Node implements EventNode {
 
     private final Output<Void> signal;
     private final Output<PlayerValue> player;
 
     public OnPlayerJoinNode() {
-        super("on_player_join", "On Player Join", "Emits a signal when a player joins.", Items.OAK_DOOR);
+        super("on_player_join", "On Player Join", "Emits a signal when a player joins.", Material.OAK_DOOR);
 
         signal = new Output<>("signal", "Signal", SignalType.INSTANCE);
         player = new Output<>("player", "Player", PlayerType.INSTANCE);
@@ -27,10 +28,15 @@ public class OnPlayerJoinNode extends Node {
         return new OnPlayerJoinNode();
     }
 
-    public void onJoin(CodeEvaluator evaluator, ServerPlayerEntity p) {
-        CodeThread thread = evaluator.newCodeThread();
-        thread.setScopeValue(player, new PlayerValue(p));
-        thread.sendSignal(signal);
-        thread.clearQueue();
+    @Override
+    public void handleEvent(EventContext context) {
+        if (context.customEvent instanceof JoinEvent(Player p)) {
+            CodeThread thread = context.newCodeThread();
+            thread.setScopeValue(player, new PlayerValue(p));
+            thread.sendSignal(signal);
+            thread.clearQueue();
+        }
     }
+
+    public record JoinEvent(Player player) {}
 }

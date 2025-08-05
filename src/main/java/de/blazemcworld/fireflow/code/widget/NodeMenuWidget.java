@@ -9,9 +9,9 @@ import de.blazemcworld.fireflow.code.node.impl.function.FunctionDefinition;
 import de.blazemcworld.fireflow.code.type.AllTypes;
 import de.blazemcworld.fireflow.code.type.WireType;
 import it.unimi.dsi.fastutil.Pair;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
 
@@ -26,7 +26,7 @@ public class NodeMenuWidget extends Widget {
 
         if (parents != null && !parents.isEmpty()) {
             NodeList.Category parent = parents.get(parents.size() - 1);
-            ButtonWidget button = new ButtonWidget(new TextWidget(pos, Text.literal("🠄 Back").formatted(Formatting.GRAY)));
+            ButtonWidget button = new ButtonWidget(new TextWidget(pos, Component.text("🠄 Back").color(NamedTextColor.GRAY)));
 
             button.handler = interaction -> {
                 if (interaction.type() != CodeInteraction.Type.RIGHT_CLICK) return false;
@@ -110,7 +110,7 @@ public class NodeMenuWidget extends Widget {
 
         if (emptyCategory) {
             menu.widgets.remove(grid);
-            menu.widgets.add(new TextWidget(pos, Text.literal("Empty category")));
+            menu.widgets.add(new TextWidget(pos, Component.text("Empty category")));
         }
 
         BorderWidget<VerticalContainerWidget> border = new BorderWidget<>(menu);

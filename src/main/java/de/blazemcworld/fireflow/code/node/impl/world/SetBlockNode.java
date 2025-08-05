@@ -1,42 +1,33 @@
 package de.blazemcworld.fireflow.code.node.impl.world;
 
-import com.mojang.serialization.DataResult;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.ConditionType;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.type.StringType;
 import de.blazemcworld.fireflow.code.type.VectorType;
-import net.minecraft.block.Block;
-import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-
-import java.util.Optional;
+import org.bukkit.Material;
+import org.bukkit.util.Vector;
 
 public class SetBlockNode extends Node {
     public SetBlockNode() {
-        super("set_block", "Set Block", "Sets a block at a position", Items.STONE);
+        super("set_block", "Set Block", "Sets a block at a position", Material.STONE);
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
-        Input<Vec3d> position = new Input<>("position", "Position", VectorType.INSTANCE);
+        Input<Vector> position = new Input<>("position", "Position", VectorType.INSTANCE);
         Input<String> block = new Input<>("block", "Block", StringType.INSTANCE);
         Input<Boolean> sendUpdate = new Input<>("send_update", "Send Update", ConditionType.INSTANCE);
         Output<Void> next = new Output<>("next", "Next", SignalType.INSTANCE);
 
         signal.onSignal((ctx) -> {
-            DataResult<Identifier> id = Identifier.validate(block.getValue(ctx));
-            Optional<Block> b = id.isSuccess() ? Registries.BLOCK.getOptionalValue(id.getOrThrow()) : Optional.empty();
-            if (b.isPresent()) {
-                Vec3d pos = position.getValue(ctx);
-                if (pos.x < -512 || pos.x > 511 || pos.z < -512 || pos.z > 511 || pos.y < ctx.evaluator.world.getBottomY() || pos.y > ctx.evaluator.world.getTopYInclusive()) {
+            Material material = Material.getMaterial(block.getValue(ctx));
+            if (material != null && material.isBlock()) {
+                Vector pos = position.getValue(ctx);
+                if (pos.getX() < -512 || pos.getX() > 511 || pos.getZ() < -512 || pos.getZ() > 511
+                        || pos.getY() < ctx.evaluator.world.getMinHeight() || pos.getY() > ctx.evaluator.world.getMaxHeight()) {
                     ctx.sendSignal(next);
                     return;
                 }
                 boolean updates = sendUpdate.getValue(ctx);
-                int updateLimit = updates ? 512 : 0;
-                int flags = updates ? Block.NOTIFY_ALL : Block.NOTIFY_LISTENERS;
-                ctx.evaluator.world.setBlockState(BlockPos.ofFloored(pos), b.get().getDefaultState(), flags, updateLimit);
+                ctx.evaluator.world.getBlockAt(pos.toLocation(ctx.evaluator.world)).setType(material, updates);
             }
             ctx.sendSignal(next);
         });

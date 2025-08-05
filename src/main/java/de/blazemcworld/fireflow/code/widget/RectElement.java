@@ -1,6 +1,6 @@
 package de.blazemcworld.fireflow.code.widget;
 
-import net.minecraft.text.TextColor;
+import net.kyori.adventure.text.format.TextColor;
 
 public class RectElement {
 

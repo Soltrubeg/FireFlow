@@ -6,12 +6,12 @@ import de.blazemcworld.fireflow.code.type.ListType;
 import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.WireType;
 import de.blazemcworld.fireflow.code.value.ListValue;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class GetListValueNode<T> extends SingleGenericNode<T> {
 
     public GetListValueNode(WireType<T> type) {
-        super("get_list_value", type == null ? "Get List Value" : "Get " + type.getName() + " List Value", "Returns the value at the given index in the list.", Items.HOPPER, type);
+        super("get_list_value", type == null ? "Get List Value" : "Get " + type.getName() + " List Value", "Returns the value at the given index in the list.", Material.HOPPER, type);
 
         Input<ListValue<T>> list = new Input<>("list", "List", ListType.of(type));
         Input<Double> index = new Input<>("index", "Index", NumberType.INSTANCE);

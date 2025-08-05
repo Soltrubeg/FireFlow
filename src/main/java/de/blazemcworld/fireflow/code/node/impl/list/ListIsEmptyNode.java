@@ -6,12 +6,12 @@ import de.blazemcworld.fireflow.code.type.ConditionType;
 import de.blazemcworld.fireflow.code.type.ListType;
 import de.blazemcworld.fireflow.code.type.WireType;
 import de.blazemcworld.fireflow.code.value.ListValue;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class ListIsEmptyNode<T> extends SingleGenericNode<T> {
 
     public ListIsEmptyNode(WireType<T> type) {
-        super("list_is_empty", type == null ? "List Is Empty" : type.getName() + " List Is Empty", "Checks if a list is empty.", Items.BARRIER, type);
+        super("list_is_empty", type == null ? "List Is Empty" : type.getName() + " List Is Empty", "Checks if a list is empty.", Material.BARRIER, type);
 
         Input<ListValue<T>> list = new Input<>("list", "List", ListType.of(type));
         Output<Boolean> isEmpty = new Output<>("is_empty", "Is Empty", ConditionType.INSTANCE);

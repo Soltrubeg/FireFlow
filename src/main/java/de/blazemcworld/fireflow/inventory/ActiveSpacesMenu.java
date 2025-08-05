@@ -1,80 +1,68 @@
 package de.blazemcworld.fireflow.inventory;
 
-import de.blazemcworld.fireflow.code.type.TextType;
+import de.blazemcworld.fireflow.FireFlow;
 import de.blazemcworld.fireflow.space.Space;
 import de.blazemcworld.fireflow.space.SpaceInfo;
 import de.blazemcworld.fireflow.space.SpaceManager;
 import de.blazemcworld.fireflow.util.ModeManager;
-import de.blazemcworld.fireflow.util.ProfileApi;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.LoreComponent;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.NamedScreenHandlerFactory;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ActiveSpacesMenu extends InventoryMenu {
+public class ActiveSpacesMenu implements InventoryMenu {
 
-    private final List<SpaceInfo> infos = new ArrayList<>();
+    private final Inventory inventory;
+    public final List<SpaceInfo> infos = new ArrayList<>();
 
-    public ActiveSpacesMenu(int syncId, ServerPlayerEntity player) {
-        super(syncId, player);
+    private ActiveSpacesMenu() {
+        inventory = Bukkit.createInventory(this, 9 * 3, Component.text("Active Spaces"));
 
         for (Space s : SpaceManager.activeSpaces()) {
             infos.add(s.info);
-            if (infos.size() >= 26) break;
+            if (infos.size() >= 27) break;
         }
 
         for (int i = 0; i < infos.size(); i++) {
             SpaceInfo info = infos.get(i);
-            int players = 0;
-            Space s = SpaceManager.getIfLoaded(info);
-            if (s != null) players = s.playWorld.getPlayers().size();
-
             ItemStack item = new ItemStack(info.icon);
-            item.set(DataComponentTypes.ITEM_NAME, TextType.INSTANCE.parseInset(info.name));
-            Style loreStyle = Style.EMPTY.withItalic(false).withColor(Formatting.GRAY);
-            item.set(DataComponentTypes.LORE, new LoreComponent(List.of(
-                    Text.literal("by " + ProfileApi.displayName(info.owner)).setStyle(loreStyle),
-                    Text.literal("Players: " + players).setStyle(loreStyle),
-                    Text.literal("ID: " + info.id).setStyle(loreStyle)
-            )));
-
-            setStack(i, item);
+            ItemMeta meta = item.getItemMeta();
+            meta.customName(FireFlow.MM.deserialize(info.name).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
+            meta.lore(List.of(
+                    Component.text("by " + Bukkit.getOfflinePlayer(info.owner).getName()).decoration(TextDecoration.ITALIC, false).color(NamedTextColor.GRAY),
+                    Component.text("Players: " + info.playerCount()).decoration(TextDecoration.ITALIC, false).color(NamedTextColor.GRAY),
+                    Component.text("ID: " + info.id).decoration(TextDecoration.ITALIC, false).color(NamedTextColor.GRAY)
+            ));
+            item.setItemMeta(meta);
+            inventory.setItem(i, item);
         }
+    }
+
+    public static void open(Player player) {
+        player.openInventory(new ActiveSpacesMenu().getInventory());
     }
 
     @Override
-    public void onSlotClick(int slotIndex, int button, SlotActionType actionType, PlayerEntity player) {
-        if (this.player != player) return;
-
-        if (slotIndex >= 0 && slotIndex < infos.size()) {
-            SpaceInfo info = infos.get(slotIndex);
-            ModeManager.move(this.player, ModeManager.Mode.PLAY, SpaceManager.getOrLoadSpace(info));
-            return;
-        }
+    public @NotNull Inventory getInventory() {
+        return inventory;
     }
 
-    public static void open(ServerPlayerEntity player) {
-        player.openHandledScreen(new NamedScreenHandlerFactory() {
-            @Override
-            public Text getDisplayName() {
-                return Text.literal("Active Spaces");
-            }
-
-            @Override
-            public ScreenHandler createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
-                return new ActiveSpacesMenu(syncId, (ServerPlayerEntity) player);
-            }
-        });
+    @Override
+    public void handleClick(InventoryClickEvent event) {
+        event.setCancelled(true);
+        if (event.getSlot() < 0 || event.getSlot() >= infos.size()) return;
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+        SpaceInfo info = infos.get(event.getSlot());
+        ModeManager.move(player, ModeManager.Mode.PLAY, SpaceManager.getOrLoadSpace(info));
     }
+
 }

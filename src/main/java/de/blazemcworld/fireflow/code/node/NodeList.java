@@ -6,8 +6,6 @@ import de.blazemcworld.fireflow.code.node.impl.condition.*;
 import de.blazemcworld.fireflow.code.node.impl.control.*;
 import de.blazemcworld.fireflow.code.node.impl.dictionary.*;
 import de.blazemcworld.fireflow.code.node.impl.entity.*;
-import de.blazemcworld.fireflow.code.node.impl.event.OnPlayerLoseFoodNode;
-import de.blazemcworld.fireflow.code.node.impl.event.OnPlayerLoseSaturationNode;
 import de.blazemcworld.fireflow.code.node.impl.event.action.*;
 import de.blazemcworld.fireflow.code.node.impl.event.combat.*;
 import de.blazemcworld.fireflow.code.node.impl.event.combat.entity.*;
@@ -15,7 +13,6 @@ import de.blazemcworld.fireflow.code.node.impl.event.meta.*;
 import de.blazemcworld.fireflow.code.node.impl.event.world.*;
 import de.blazemcworld.fireflow.code.node.impl.function.FunctionCallNode;
 import de.blazemcworld.fireflow.code.node.impl.function.FunctionDefinition;
-import de.blazemcworld.fireflow.code.node.impl.event.action.OnPlayerStartSneakingNode;
 import de.blazemcworld.fireflow.code.node.impl.item.*;
 import de.blazemcworld.fireflow.code.node.impl.list.*;
 import de.blazemcworld.fireflow.code.node.impl.number.*;
@@ -32,8 +29,7 @@ import de.blazemcworld.fireflow.code.node.impl.text.FormatToTextNode;
 import de.blazemcworld.fireflow.code.node.impl.variable.*;
 import de.blazemcworld.fireflow.code.node.impl.vector.*;
 import de.blazemcworld.fireflow.code.node.impl.world.*;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -46,14 +42,14 @@ public class NodeList {
 
     public static void init() {
         root = new Category("All", null)
-                .add(new Category("Condition", Items.COMPARATOR)
+                .add(new Category("Condition", Material.COMPARATOR)
                         .add(new ConditionAndNode())
                         .add(new ConditionOrNode())
                         .add(new ConditionalChoiceNode<>(null))
                         .add(new InvertConditionNode())
                         .add(new ValuesEqualNode<>(null))
                 )
-                .add(new Category("Dictionary", Items.CHISELED_BOOKSHELF)
+                .add(new Category("Dictionary", Material.CHISELED_BOOKSHELF)
                         .add(new DictionaryGetNode<>(null, null))
                         .add(new DictionaryHasNode<>(null, null))
                         .add(new DictionaryKeysNode<>(null, null))
@@ -62,7 +58,7 @@ public class NodeList {
                         .add(new DictionarySizeNode<>(null, null))
                         .add(new DictionaryValuesNode<>(null, null))
                 )
-                .add(new Category("Entity", Items.ZOMBIE_HEAD)
+                .add(new Category("Entity", Material.ZOMBIE_HEAD)
                         .add(new ClearEntityEffectsNode())
                         .add(new EntityIsValidNode())
                         .add(new EntityListNode())
@@ -77,8 +73,8 @@ public class NodeList {
                         .add(new TakeEntityEffectNode())
                         .add(new TeleportEntityNode())
                 )
-                .add(new Category("Event", Items.OBSERVER)
-                        .add(new Category("Action", Items.STICK)
+                .add(new Category("Event", Material.OBSERVER)
+                        .add(new Category("Action", Material.STICK)
                                 .add(new OnPlayerStartFlyingNode())
                                 .add(new OnPlayerStartSneakingNode())
                                 .add(new OnPlayerStartSprintingNode())
@@ -89,8 +85,8 @@ public class NodeList {
                                 .add(new OnPlayerSwingHandNode())
                                 .add(new OnPlayerUseItemNode())
                         )
-                        .add(new Category("Combat", Items.IRON_SWORD)
-                                .add(new Category("Entity", Items.ZOMBIE_HEAD)
+                        .add(new Category("Combat", Material.IRON_SWORD)
+                                .add(new Category("Entity", Material.ZOMBIE_HEAD)
                                         .add(new OnEntityAttackEntityNode())
                                         .add(new OnEntityAttackPlayerNode())
                                         .add(new OnEntityDeathNode())
@@ -106,7 +102,7 @@ public class NodeList {
                                 .add(new SetEventDamageNode())
                                 .add(new OnPlayerHurtNode())
                         )
-                        .add(new Category("Meta", Items.COMMAND_BLOCK)
+                        .add(new Category("Meta", Material.COMMAND_BLOCK)
                                 .add(new CancelEventNode())
                                 .add(new DebugEventNode())
                                 .add(new OnInitializeNode())
@@ -114,17 +110,15 @@ public class NodeList {
                                 .add(new OnPlayerJoinNode())
                                 .add(new OnPlayerLeaveNode())
                         )
-                        .add(new Category("World", Items.GRASS_BLOCK)
+                        .add(new Category("World", Material.GRASS_BLOCK)
                                 .add(new OnChunkLoadNode())
                                 .add(new OnPlayerBreakBlockNode())
                                 .add(new OnPlayerDropItemNode())
                                 .add(new OnPlayerInteractBlockNode())
                                 .add(new OnPlayerPlaceBlockNode())
                         )
-                        .add(new OnPlayerLoseFoodNode())
-                        .add(new OnPlayerLoseSaturationNode())
                 )
-                .add(new Category("Control", Items.REPEATER)
+                .add(new Category("Control", Material.REPEATER)
                         .add(new DictionaryForEach<>(null, null))
                         .add(new GridRepeatNode())
                         .add(new IfNode())
@@ -134,7 +128,7 @@ public class NodeList {
                         .add(new ScheduleNode())
                         .add(new WhileNode())
                 )
-                .add(new Category("Item", Items.ITEM_FRAME)
+                .add(new Category("Item", Material.ITEM_FRAME)
                         .add(new EnchantItemNode())
                         .add(new GetHiddenItemInfoNode())
                         .add(new GetItemCountNode())
@@ -150,7 +144,7 @@ public class NodeList {
                         .add(new SetItemNameNode())
                         .add(new SetItemUnbreakableNode())
                 )
-                .add(new Category("List", Items.BOOKSHELF)
+                .add(new Category("List", Material.BOOKSHELF)
                         .add(new CreateListNode<>(null))
                         .add(new FlattenListNode<>(null))
                         .add(new GetListValueNode<>(null))
@@ -169,7 +163,7 @@ public class NodeList {
                         .add(new ShuffleListNode<>(null))
                         .add(new TrimListNode<>(null))
                 )
-                .add(new Category("Number", Items.CLOCK)
+                .add(new Category("Number", Material.CLOCK)
                         .add(new AbsoluteNumberNode())
                         .add(new AddNumbersNode())
                         .add(new BasicNoiseNode())
@@ -189,8 +183,8 @@ public class NodeList {
                         .add(new SquareRootNode())
                         .add(new SubtractNumbersNode())
                 )
-                .add(new Category("Player", Items.PLAYER_HEAD)
-                        .add(new Category("Gameplay", Items.GRASS_BLOCK)
+                .add(new Category("Player", Material.PLAYER_HEAD)
+                        .add(new Category("Gameplay", Material.GRASS_BLOCK)
                                 .add(new ClearPlayerEffectsNode())
                                 .add(new DamagePlayerNode())
                                 .add(new GivePlayerEffectNode())
@@ -202,7 +196,7 @@ public class NodeList {
                                 .add(new SetPlayerInvulnerableNode())
                                 .add(new TakePlayerEffectNode())
                         )
-                        .add(new Category("Inventory", Items.ITEM_FRAME)
+                        .add(new Category("Inventory", Material.ITEM_FRAME)
                                 .add(new ClearInventoryNode())
                                 .add(new GetHeldSlotNode())
                                 .add(new GetPlayerEquipmentNode())
@@ -219,7 +213,7 @@ public class NodeList {
                                 .add(new SetPlayerSlotItemNode())
                                 .add(new TakePlayerItemNode())
                         )
-                        .add(new Category("Meta", Items.COMMAND_BLOCK)
+                        .add(new Category("Meta", Material.COMMAND_BLOCK)
                                 .add(new GetPlayerNameNode())
                                 .add(new GetPlayerUUIDNode())
                                 .add(new IsPlayingNode())
@@ -229,7 +223,7 @@ public class NodeList {
                                 .add(new PlayerHasPermissionNode())
                                 .add(new PlayerListNode())
                         )
-                        .add(new Category("Movement", Items.FEATHER)
+                        .add(new Category("Movement", Material.FEATHER)
                                 .add(new IsPlayerSneakingNode())
                                 .add(new IsPlayerSprintingNode())
                                 .add(new PlayerCanFlyNode())
@@ -242,7 +236,7 @@ public class NodeList {
                                 .add(new SetPlayerVelocityNode())
                                 .add(new TeleportPlayerNode())
                         )
-                        .add(new Category("Statistic", Items.EXPERIENCE_BOTTLE)
+                        .add(new Category("Statistic", Material.EXPERIENCE_BOTTLE)
                                 .add(new GetExperienceLevelNode())
                                 .add(new GetExperiencePercentageNode())
                                 .add(new GetPlayerFoodNode())
@@ -253,7 +247,7 @@ public class NodeList {
                                 .add(new SetPlayerHealthNode())
                                 .add(new SetPlayerSaturationNode())
                         )
-                        .add(new Category("Visual", Items.ENDER_PEARL)
+                        .add(new Category("Visual", Material.ENDER_PEARL)
                                 .add(new BroadcastNode())
                                 .add(new SendActionbarNode())
                                 .add(new SendBlockChangeNode())
@@ -262,14 +256,14 @@ public class NodeList {
                                 .add(new SetPlayerSkinNode())
                         )
                 )
-                .add(new Category("Position", Items.COMPASS)
+                .add(new Category("Position", Material.COMPASS)
                         .add(new FacingVectorNode())
                         .add(new PackPositionNode())
                         .add(new PositionDistanceNode())
                         .add(new SetPositionComponentNode())
                         .add(new UnpackPositionNode())
                 )
-                .add(new Category("String", Items.STRING)
+                .add(new Category("String", Material.STRING)
                         .add(new CharacterAtNode())
                         .add(new CombineStringsNode())
                         .add(new LowercaseNode())
@@ -281,11 +275,11 @@ public class NodeList {
                         .add(new SubstringNode())
                         .add(new UppercaseNode())
                 )
-                .add(new Category("Text", Items.WRITABLE_BOOK)
+                .add(new Category("Text", Material.WRITABLE_BOOK)
                         .add(new CombineTextsNode())
                         .add(new FormatToTextNode())
                 )
-                .add(new Category("Variable", Items.ENDER_CHEST)
+                .add(new Category("Variable", Material.ENDER_CHEST)
                         .add(new CacheValueNode<>(null))
                         .add(new DecrementVariableNode())
                         .add(new GetVariableNode<>(null))
@@ -295,7 +289,7 @@ public class NodeList {
                         .add(new SetVariableNode<>(null))
                         .add(new VariableExistsNode())
                 )
-                .add(new Category("Vector", Items.ARROW)
+                .add(new Category("Vector", Material.ARROW)
                         .add(new AddVectorsNode())
                         .add(new GetVectorComponentNode())
                         .add(new PackVectorNode())
@@ -306,7 +300,7 @@ public class NodeList {
                         .add(new SubtractVectorsNode())
                         .add(new UnpackVectorNode())
                 )
-                .add(new Category("World", Items.GRASS_BLOCK)
+                .add(new Category("World", Material.GRASS_BLOCK)
                         .add(new BlockIdListNode())
                         .add(new CpuUsageNode())
                         .add(new DebugMessageNode())
@@ -319,22 +313,22 @@ public class NodeList {
                         .add(new SetBlockTagNode<>(null))
                         .add(new SetRegionNode())
                 )
-                .add(new Category("Function", Items.COMMAND_BLOCK).markFunctions())
+                .add(new Category("Function", Material.COMMAND_BLOCK).markFunctions())
                 .finish();
 
-        FireFlow.LOGGER.info("Loaded {} node types", root.collectNodes(null).size());
+        FireFlow.logger.info("Loaded " + root.collectNodes(null).size() + " node types");
     }
 
     public static class Category {
         public final String name;
-        public final Item icon;
+        public final Material icon;
 
         public final List<Category> categories = new ArrayList<>();
         public final List<Node> nodes = new ArrayList<>();
         public boolean isFunctions = false;
         public Predicate<Node> filter;
 
-        public Category(String name, Item icon) {
+        public Category(String name, Material icon) {
             this.name = name;
             this.icon = icon;
         }

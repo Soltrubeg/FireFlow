@@ -1,16 +1,16 @@
 package de.blazemcworld.fireflow.code.widget;
 
 import de.blazemcworld.fireflow.code.CodeEditor;
-import de.blazemcworld.fireflow.code.CodeWorld;
-import net.minecraft.util.math.Vec3d;
+import org.bukkit.Location;
+import org.bukkit.World;
 
 public record WidgetVec(CodeEditor editor, double x, double y) {
 
-    public Vec3d vec() {
-        return new Vec3d(x, y, 15.999);
+    public Location loc() {
+        return new Location(editor.world, x, y, 15.999, 180, 0);
     }
 
-    public CodeWorld world() {
+    public World world() {
         return editor.world;
     }
 

@@ -2,14 +2,14 @@ package de.blazemcworld.fireflow.code.node;
 
 import de.blazemcworld.fireflow.code.type.AllTypes;
 import de.blazemcworld.fireflow.code.type.WireType;
-import net.minecraft.item.Item;
+import org.bukkit.Material;
 
 import java.util.List;
 
 public abstract class SingleGenericNode<T> extends Node {
     protected final WireType<T> type;
 
-    protected SingleGenericNode(String id, String name, String description, Item icon, WireType<T> type) {
+    protected SingleGenericNode(String id, String name, String description, Material icon, WireType<T> type) {
         super(id, name, description, icon);
         this.type = type;
     }

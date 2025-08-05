@@ -3,14 +3,14 @@ package de.blazemcworld.fireflow.code.type;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import de.blazemcworld.fireflow.code.value.AnyValue;
-import net.minecraft.item.Items;
-import net.minecraft.text.TextColor;
+import net.kyori.adventure.text.format.TextColor;
+import org.bukkit.Material;
 
 public class AnyType extends WireType<AnyValue<?>> {
     public static final AnyType INSTANCE = new AnyType();
 
     private AnyType() {
-        super("any", TextColor.fromRgb(0x91382E), Items.EXPERIENCE_BOTTLE);
+        super("any", TextColor.color(0x91382E), Material.EXPERIENCE_BOTTLE);
     }
 
     @Override

@@ -1,25 +1,20 @@
 package de.blazemcworld.fireflow.code.node.impl.entity;
 
-import com.mojang.serialization.DataResult;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.node.option.EffectOptions;
 import de.blazemcworld.fireflow.code.type.EntityType;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.type.StringType;
 import de.blazemcworld.fireflow.code.value.EntityValue;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.effect.StatusEffect;
-import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.util.Identifier;
-
-import java.util.Optional;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
+import org.bukkit.potion.PotionEffectType;
 
 public class TakeEntityEffectNode extends Node {
 
     public TakeEntityEffectNode() {
-        super("take_entity_effect", "Take Entity Effect", "Takes an effect from the entity", Items.LINGERING_POTION);
+        super("take_entity_effect", "Take Entity Effect", "Takes an effect from the entity", Material.LINGERING_POTION);
 
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
         Input<EntityValue> entity = new Input<>("entity", "Entity", EntityType.INSTANCE);
@@ -28,12 +23,10 @@ public class TakeEntityEffectNode extends Node {
 
         signal.onSignal((ctx) -> {
             entity.getValue(ctx).use(ctx, e -> {
-                if (!(e instanceof LivingEntity living)) return;
-                DataResult<Identifier> id = Identifier.validate(effect.getValue(ctx));
-                if (id.isError()) return;
-                Optional<RegistryEntry.Reference<StatusEffect>> effectEntry = Registries.STATUS_EFFECT.getEntry(id.getOrThrow());
-                if (effectEntry.isEmpty()) return;
-                living.removeStatusEffect(effectEntry.get());
+                if (!(e instanceof org.bukkit.entity.LivingEntity living)) return;
+                PotionEffectType type = Registry.POTION_EFFECT_TYPE.get(NamespacedKey.minecraft(effect.getValue(ctx)));
+                if (type == null) return;
+                living.removePotionEffect(type);
             });
             ctx.sendSignal(next);
         });

@@ -6,14 +6,13 @@ import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.PlayerType;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.value.PlayerValue;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 
 public class SetPlayerInventorySlotNode extends Node {
 
     public SetPlayerInventorySlotNode() {
-        super("set_player_inventory_slot", "Set Player Inventory Slot", "Changes a single item slot in the player's inventory.", Items.ITEM_FRAME);
+        super("set_player_inventory_slot", "Set Player Inventory Slot", "Changes a single item slot in the player's inventory.", Material.ITEM_FRAME);
 
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
         Input<PlayerValue> player = new Input<>("player", "Player", PlayerType.INSTANCE);
@@ -25,10 +24,8 @@ public class SetPlayerInventorySlotNode extends Node {
         signal.onSignal((ctx) -> {
             player.getValue(ctx).tryUse(ctx, p -> {
                 int id = slot.getValue(ctx).intValue();
-                if (id < 0) return;
-                if (id < p.getInventory().size() || PlayerInventory.EQUIPMENT_SLOTS.get(id) != null) {
-                    p.getInventory().setStack(id, item.getValue(ctx));
-                }
+                if (id < 0 || id > 40) return;
+                p.getInventory().setItem(id, item.getValue(ctx));
             });
             ctx.sendSignal(next);
         });

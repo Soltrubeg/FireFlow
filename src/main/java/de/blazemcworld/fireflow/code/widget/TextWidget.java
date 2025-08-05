@@ -1,46 +1,41 @@
 package de.blazemcworld.fireflow.code.widget;
 
 import com.google.gson.JsonObject;
-import de.blazemcworld.fireflow.FireFlow;
 import de.blazemcworld.fireflow.code.CodeInteraction;
 import de.blazemcworld.fireflow.util.TextWidth;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.decoration.DisplayEntity;
-import net.minecraft.text.PlainTextContent;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.math.AffineTransformation;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.TextColor;
+import org.bukkit.Color;
+import org.bukkit.entity.TextDisplay;
+import org.bukkit.util.Transformation;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.List;
+import java.util.UUID;
 
 public class TextWidget extends Widget {
 
-    private final DisplayEntity.TextDisplayEntity display;
-    private boolean spawned = false;
+    private TextDisplay display;
     private double xScale = 1;
     private double yScale = 1;
     private int rotation = 0;
+    private Component text;
+    private final String webUUID = UUID.randomUUID().toString();
 
     public TextWidget(WidgetVec pos) {
         super(pos);
-        display = new DisplayEntity.TextDisplayEntity(EntityType.TEXT_DISPLAY, pos.world());
-        display.setBackground(0);
-        display.setLineWidth(Integer.MAX_VALUE);
-        display.setInterpolationDuration(1);
-        display.setTeleportDuration(1);
-        display.setYaw(180);
     }
 
-    public TextWidget(WidgetVec pos, Text text) {
+    public TextWidget(WidgetVec pos, Component text) {
         this(pos);
         setText(text);
     }
 
-    public void setText(Text text) {
-        display.setText(text);
+    public void setText(Component text) {
+        if (display != null) display.text(text);
+        this.text = text;
     }
 
     @Override
@@ -50,32 +45,44 @@ public class TextWidget extends Widget {
 
         pos = pos.add(-size.x() / 2.0, -size.y());
 
-        display.setPosition(pos.vec());
-        if (!spawned) {
-            FireFlow.server.execute(() -> pos().world().spawnEntity(display));
-            spawned = true;
+        if (display == null || !display.isValid()) {
+            display = pos.world().createEntity(pos.loc(), TextDisplay.class);
+            display.text(text);
+            display.setBackgroundColor(Color.fromARGB(0));
+            display.setLineWidth(Integer.MAX_VALUE);
+            display.setInterpolationDuration(1);
+            display.setTeleportDuration(1);
+            display.setTransformation(new Transformation(
+                    display.getTransformation().getTranslation(),
+                    new Quaternionf(0, 0, (float) Math.sin(Math.toRadians(rotation) * 0.5), (float) Math.cos(Math.toRadians(rotation) * 0.5)),
+                    new Vector3f((float) xScale, (float) yScale, 1),
+                    display.getTransformation().getRightRotation()
+            ));
+            display.spawnAt(pos.loc());
+        } else {
+            display.teleport(pos.loc());
         }
 
         JsonObject json = new JsonObject();
         json.addProperty("type", "text");
-        json.addProperty("id", display.getUuid().toString());
+        json.addProperty("id", webUUID);
         json.addProperty("x", pos().x());
         json.addProperty("y", pos().y());
-        json.addProperty("text", getPlainText(display.getText()));
+        json.addProperty("text", getPlainText(text));
         json.addProperty("scaleX", xScale);
         json.addProperty("scaleY", yScale);
         json.addProperty("rotation", rotation);
-        TextColor c = display.getText().getStyle().getColor();
-        json.addProperty("color", c == null ? "" : c.getHexCode());
+        TextColor c = text.style().color();
+        json.addProperty("color", c == null ? "" : c.asHexString());
         pos.editor().webBroadcast(json);
     }
 
-    private String getPlainText(Text text) {
+    private String getPlainText(Component text) {
         StringBuilder builder = new StringBuilder();
-        if (text.getContent() instanceof PlainTextContent.Literal(String literal)) {
-            builder.append(literal);
+        if (text instanceof TextComponent plain) {
+            builder.append(plain.content());
         }
-        for (Text child : text.getSiblings()) {
+        for (Component child : text.children()) {
             builder.append(getPlainText(child));
         }
         return builder.toString();
@@ -83,11 +90,11 @@ public class TextWidget extends Widget {
 
     @Override
     public void remove() {
-        if (spawned) display.remove(Entity.RemovalReason.DISCARDED);
-
+        if (display == null) return;
+        display.remove();
         JsonObject json = new JsonObject();
         json.addProperty("type", "remove");
-        json.addProperty("id", display.getUuid().toString());
+        json.addProperty("id", webUUID);
         pos().editor().webBroadcast(json);
     }
 
@@ -98,31 +105,33 @@ public class TextWidget extends Widget {
 
     @Override
     public WidgetVec size() {
-        return new WidgetVec(pos().editor(), TextWidth.calculate(display.getText()) / 40.0 * xScale, 0.25 * yScale);
+        return new WidgetVec(pos().editor(), TextWidth.calculate(text) / 40.0 * xScale, 0.25 * yScale);
     }
 
     public TextWidget stretch(double x, double y) {
         xScale = x;
         yScale = y;
-        AffineTransformation transform = DisplayEntity.getTransformation(display.getDataTracker());
-        display.setTransformation(new AffineTransformation(
-                transform.getTranslation(),
-                transform.getLeftRotation(),
+        if (display == null) return this;
+
+        display.setTransformation(new Transformation(
+                display.getTransformation().getTranslation(),
+                display.getTransformation().getLeftRotation(),
                 new Vector3f((float) xScale, (float) yScale, 1),
-                transform.getRightRotation()
+                display.getTransformation().getRightRotation()
         ));
         return this;
     }
 
     public void setRotation(int deg) {
         this.rotation = deg;
+        if (display == null) return;
+
         double rotation = Math.toRadians(deg);
-        AffineTransformation transform = DisplayEntity.getTransformation(display.getDataTracker());
-        display.setTransformation(new AffineTransformation(
-                transform.getTranslation(),
+        display.setTransformation(new Transformation(
+                display.getTransformation().getTranslation(),
                 new Quaternionf(0, 0, (float) Math.sin(rotation * 0.5), (float) Math.cos(rotation * 0.5)),
-                transform.getScale(),
-                transform.getRightRotation()
+                display.getTransformation().getScale(),
+                display.getTransformation().getRightRotation()
         ));
     }
 

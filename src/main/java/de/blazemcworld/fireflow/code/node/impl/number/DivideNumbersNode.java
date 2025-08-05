@@ -2,12 +2,12 @@ package de.blazemcworld.fireflow.code.node.impl.number;
 
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.NumberType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class DivideNumbersNode extends Node {
     
     public DivideNumbersNode() {
-        super("divide_numbers", "Divide Numbers", "Divides a number by multiple other numbers", Items.ANVIL);
+        super("divide_numbers", "Divide Numbers", "Divides a number by multiple other numbers", Material.ANVIL);
         
         Input<Double> left = new Input<>("left", "Left", NumberType.INSTANCE);
         Varargs<Double> right = new Varargs<>("right", "Right", NumberType.INSTANCE);

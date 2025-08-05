@@ -5,11 +5,11 @@ import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.PlayerType;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.value.PlayerValue;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class SetPlayerHealthNode extends Node {
     public SetPlayerHealthNode() {
-        super("set_player_health", "Set Player Health", "Sets the health points of a player", Items.RED_DYE);
+        super("set_player_health", "Set Player Health", "Sets the health points of a player", Material.RED_DYE);
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
         Input<PlayerValue> player = new Input<>("player", "Player", PlayerType.INSTANCE);
         Input<Double> health = new Input<>("health", "Health", NumberType.INSTANCE);

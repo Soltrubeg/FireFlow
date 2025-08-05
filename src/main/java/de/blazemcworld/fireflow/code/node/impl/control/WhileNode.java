@@ -3,12 +3,12 @@ package de.blazemcworld.fireflow.code.node.impl.control;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.ConditionType;
 import de.blazemcworld.fireflow.code.type.SignalType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class WhileNode extends Node {
 
     public WhileNode() {
-        super("while", "While", "Repeatedly emits a signal as long as a condition is true.", Items.DAYLIGHT_DETECTOR);
+        super("while", "While", "Repeatedly emits a signal as long as a condition is true.", Material.DAYLIGHT_DETECTOR);
 
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
         Input<Boolean> condition = new Input<>("condition", "Condition", ConditionType.INSTANCE);

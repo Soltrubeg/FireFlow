@@ -2,8 +2,8 @@ package de.blazemcworld.fireflow.code.type;
 
 import com.google.gson.JsonElement;
 import de.blazemcworld.fireflow.code.value.AnyValue;
-import net.minecraft.item.Item;
-import net.minecraft.text.TextColor;
+import net.kyori.adventure.text.format.TextColor;
+import org.bukkit.Material;
 
 import java.util.List;
 
@@ -11,9 +11,9 @@ public abstract class WireType<T> {
 
     public final String id;
     public final TextColor color;
-    public final Item icon;
+    public final Material icon;
 
-    public WireType(String id, TextColor color, Item icon) {
+    public WireType(String id, TextColor color, Material icon) {
         this.id = id;
         this.color = color;
         this.icon = icon;

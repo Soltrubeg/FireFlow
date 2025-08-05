@@ -5,15 +5,15 @@ import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.ConditionType;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.type.StringType;
-import net.minecraft.item.Items;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
 
 public class DebugMessageNode extends Node {
 
     public DebugMessageNode() {
-        super("debug_message", "Debug Message", "Sends a message to all developers on the space.", Items.NETHER_STAR);
+        super("debug_message", "Debug Message", "Sends a message to all developers on the space.", Material.NETHER_STAR);
 
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
         Input<Boolean> disable = new Input<>("disable", "Disable", ConditionType.INSTANCE);
@@ -32,10 +32,10 @@ public class DebugMessageNode extends Node {
             }
             out.setLength(out.length() - 1);
 
-            Text msg = Text.literal("Debug: ").formatted(Formatting.AQUA).append(Text.literal(out.toString()).formatted(Formatting.DARK_AQUA));
-            for (ServerPlayerEntity player : ctx.evaluator.space.getPlayers()) {
-                if (ctx.evaluator.space.info.isOwnerOrDeveloper(player.getUuid())) {
-                    player.sendMessage(msg, false);
+            Component msg = Component.text("Debug: ").color(NamedTextColor.AQUA).append(Component.text(out.toString()).color(NamedTextColor.DARK_AQUA));
+            for (Player player : ctx.evaluator.space.getPlayers()) {
+                if (ctx.evaluator.space.info.isOwnerOrDeveloper(player.getUniqueId())) {
+                    player.sendMessage(msg);
                 }
             }
             JsonObject json = new JsonObject();

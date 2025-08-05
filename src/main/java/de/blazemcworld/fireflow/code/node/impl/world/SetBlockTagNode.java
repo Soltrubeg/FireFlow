@@ -3,12 +3,13 @@ package de.blazemcworld.fireflow.code.node.impl.world;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.node.SingleGenericNode;
 import de.blazemcworld.fireflow.code.type.*;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.item.Items;
-import net.minecraft.state.property.*;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.block.state.properties.Property;
+import org.bukkit.Material;
+import org.bukkit.craftbukkit.block.CraftBlockState;
+import org.bukkit.util.Vector;
 
 import java.util.Optional;
 
@@ -16,53 +17,50 @@ public class SetBlockTagNode<T> extends SingleGenericNode<T> {
 
     @SuppressWarnings("unchecked")
     public <S extends Comparable<S>> SetBlockTagNode(WireType<T> type) {
-        super("set_block_tag", type == null ? "Set Block Tag" : "Set " + type.getName() + " Block Tag", "Sets the value of a block's tag", Items.STONECUTTER, type);
+        super("set_block_tag", type == null ? "Set Block Tag" : "Set " + type.getName() + " Block Tag", "Sets the value of a block's tag", Material.STONECUTTER, type);
 
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
-        Input<Vec3d> position = new Input<>("position", "Position", VectorType.INSTANCE);
+        Input<Vector> position = new Input<>("position", "Position", VectorType.INSTANCE);
         Input<String> tag = new Input<>("tag", "Tag", StringType.INSTANCE);
         Input<T> value = new Input<>("value", "Value", type);
-        Input<Boolean> sendUpdate = new Input<>("send_update", "Send Update", ConditionType.INSTANCE);
         Output<Void> next = new Output<>("next", "Next", SignalType.INSTANCE);
 
         signal.onSignal((ctx) -> {
-            Vec3d pos = position.getValue(ctx);
-            if (pos.x < -512 || pos.x > 511 || pos.z < -512 || pos.z > 511 || pos.y < ctx.evaluator.world.getBottomY() || pos.y > ctx.evaluator.world.getTopYInclusive()) {
+            Vector pos = position.getValue(ctx);
+            if (pos.getX() < -512 || pos.getX() > 511 || pos.getZ() < -512 || pos.getZ() > 511 || pos.getY() < ctx.evaluator.world.getMinHeight() || pos.getY() > ctx.evaluator.world.getMaxHeight()) {
                 ctx.sendSignal(next);
                 return;
             }
 
             String propertyName = tag.getValue(ctx);
             T propertyValue = value.getValue(ctx);
-            boolean updates = sendUpdate.getValue(ctx);
-            int updateLimit = updates ? 512 : 0;
-            int flags = updates ? Block.NOTIFY_ALL : Block.NOTIFY_LISTENERS;
 
-            BlockPos blockPos = BlockPos.ofFloored(pos);
-            BlockState blockState = ctx.evaluator.world.getBlockState(blockPos);
-            for (Property<?> property : blockState.getProperties()) {
+            CraftBlockState state = (CraftBlockState) pos.toLocation(ctx.evaluator.world).getBlock().getState();
+            for (Property<?> property : state.getHandle().getProperties()) {
                 if (property.getName().equals(propertyName)) {
                     switch (property) {
                         case BooleanProperty booleanProperty when type == ConditionType.INSTANCE -> {
                             boolean booleanValue = (boolean) propertyValue;
-                            ctx.evaluator.world.setBlockState(blockPos, blockState.with(booleanProperty, booleanValue), flags, updateLimit);
+                            state.setData(state.getHandle().setValue(booleanProperty, booleanValue));
                         }
-                        case IntProperty intProperty when type == NumberType.INSTANCE -> {
-                            int intValue = ((Double)propertyValue).intValue();
-                            if (intProperty.ordinal(intValue) >= 0) {
-                                ctx.evaluator.world.setBlockState(blockPos, blockState.with(intProperty, intValue), flags, updateLimit);
+                        case IntegerProperty intProperty when type == NumberType.INSTANCE -> {
+                            int intValue = ((Double) propertyValue).intValue();
+                            if (intProperty.getInternalIndex(intValue) >= 0) {
+                                state.setData(state.getHandle().setValue(intProperty, intValue));
                             }
                         }
                         case EnumProperty<?> enumProperty when type == StringType.INSTANCE -> {
                             String stringValue = (String) propertyValue;
-                            Optional<S> parsedValue = ((Property<S>) property).parse(stringValue);
-                            parsedValue.ifPresent(s -> ctx.evaluator.world.setBlockState(blockPos, blockState.with((Property<S>) property, s), flags, updateLimit));
+                            Optional<S> parsedValue = ((Property<S>) property).getValue(stringValue);
+                            parsedValue.ifPresent(s -> state.setData(state.getHandle().setValue((Property<S>) property, s)));
                         }
-                        default -> {}
+                        default -> {
+                        }
                     }
                     break;
                 }
             }
+
             ctx.sendSignal(next);
         });
     }

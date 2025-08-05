@@ -6,12 +6,12 @@ import de.blazemcworld.fireflow.code.type.ListType;
 import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.WireType;
 import de.blazemcworld.fireflow.code.value.ListValue;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class RemoveListIndexNode<T> extends SingleGenericNode<T> {
 
     public RemoveListIndexNode(WireType<T> type) {
-        super("remove_list_index", type == null ? "Remove List Index" : "Remove " + type.getName() + " List Index", "Removes an item from a list at the specified position", Items.TNT, type);
+        super("remove_list_index", type == null ? "Remove List Index" : "Remove " + type.getName() + " List Index", "Removes an item from a list at the specified position", Material.TNT, type);
 
         Input<ListValue<T>> list = new Input<>("list", "List", ListType.of(type));
         Input<Double> index = new Input<>("index", "Index", NumberType.INSTANCE);

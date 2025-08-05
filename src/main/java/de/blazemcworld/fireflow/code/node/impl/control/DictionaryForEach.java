@@ -6,14 +6,13 @@ import de.blazemcworld.fireflow.code.type.DictionaryType;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.type.WireType;
 import de.blazemcworld.fireflow.code.value.DictionaryValue;
-import net.minecraft.item.Items;
-
 import java.util.List;
+import org.bukkit.Material;
 
 public class DictionaryForEach<K, V> extends DualGenericNode<K, V> {
 
     public DictionaryForEach(WireType<K> type1, WireType<V> type2) {
-        super("dictionary_for_each", type1 == null || type2 == null ? "Dictionary For Each" : type1.getName() + " " + type2.getName() + " Dictionary For Each", "Iterates over all entries in a dictionary.", Items.HOPPER_MINECART, type1, type2);
+        super("dictionary_for_each", type1 == null || type2 == null ? "Dictionary For Each" : type1.getName() + " " + type2.getName() + " Dictionary For Each", "Iterates over all entries in a dictionary.", Material.HOPPER_MINECART, type1, type2);
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
         Input<DictionaryValue<K, V>> dict = new Input<>("dictionary", "Dictionary", DictionaryType.of(type1, type2));
 

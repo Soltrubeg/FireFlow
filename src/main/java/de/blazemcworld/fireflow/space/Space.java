@@ -3,14 +3,15 @@ package de.blazemcworld.fireflow.space;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import de.blazemcworld.fireflow.FireFlow;
+import de.blazemcworld.fireflow.code.CodeChunkGenerator;
 import de.blazemcworld.fireflow.code.CodeEditor;
 import de.blazemcworld.fireflow.code.CodeEvaluator;
-import de.blazemcworld.fireflow.code.CodeWorld;
 import de.blazemcworld.fireflow.code.VariableStore;
-import de.blazemcworld.fireflow.util.DummyPlayer;
+import de.blazemcworld.fireflow.util.FlatChunkGenerator;
 import de.blazemcworld.fireflow.util.ModeManager;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.world.GameMode;
+import de.blazemcworld.fireflow.util.WorldUtil;
+import org.bukkit.*;
+import org.bukkit.entity.Player;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,36 +19,47 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
 
 public class Space {
     public final SpaceInfo info;
-    public final PlayWorld playWorld;
-    public final CodeWorld codeWorld;
+    public final World playWorld;
+    public final World codeWorld;
     public final CodeEditor editor;
     public final VariableStore savedVariables;
     private int emptyTimer = 0;
     public CodeEvaluator evaluator;
+    private boolean unloaded = false;
     public final DummyManager dummyManager;
 
     public Space(SpaceInfo info) {
         this.info = info;
-        playWorld = PlayWorld.create("play-" + info.id, this);
-        codeWorld = CodeWorld.create("code-" + info.id, this);
+        playWorld = WorldCreator.name("play-" + info.id)
+                .generator(new FlatChunkGenerator())
+                .createWorld();
+        codeWorld = WorldCreator.name("code-" + info.id)
+                .generator(new CodeChunkGenerator())
+                .createWorld();
+        codeWorld.setAutoSave(false);
+
+        WorldUtil.init(playWorld);
+        WorldUtil.init(codeWorld);
         editor = new CodeEditor(this, codeWorld);
         savedVariables = new VariableStore();
         try {
             if (!Files.exists(path())) Files.createDirectories(path());
         } catch (IOException e) {
-            FireFlow.LOGGER.error("Failed to create directory for space {}!", info.id, e);
+            FireFlow.logger.log(Level.WARNING, "Failed to create directory for space " + info.id, e);
         }
 
         if (Files.exists(path().resolve("variables.json"))) {
             try {
                 savedVariables.load(JsonParser.parseString(Files.readString(path().resolve("variables.json"))).getAsJsonObject());
             } catch (IOException e) {
-                FireFlow.LOGGER.error("Failed to load variables.json for space {}!", info.id, e);
+                FireFlow.logger.log(Level.WARNING, "Failed to load variables.json for space " + info.id, e);
             }
         }
+
         editor.load();
         evaluator = new CodeEvaluator(this);
         dummyManager = new DummyManager(this);
@@ -58,7 +70,7 @@ public class Space {
         try {
             Files.writeString(path().resolve("variables.json"), vars.toString());
         } catch (IOException e) {
-            FireFlow.LOGGER.error("Failed to save variables.json for space {}!", info.id, e);
+            FireFlow.logger.log(Level.WARNING, "Failed to save variables.json for space " + info.id, e);
         }
         editor.save();
     }
@@ -67,31 +79,26 @@ public class Space {
         return emptyTimer > 100;
     }
 
-    protected void unload(Runnable callback) {
+    protected void unload() {
         dummyManager.reset();
-        for (ServerPlayerEntity player : new ArrayList<>(playWorld.getPlayers())) {
+        for (Player player : new ArrayList<>(playWorld.getPlayers())) {
             ModeManager.move(player, ModeManager.Mode.LOBBY, this);
         }
-        for (ServerPlayerEntity player : new ArrayList<>(codeWorld.getPlayers())) {
+        for (Player player : new ArrayList<>(codeWorld.getPlayers())) {
             ModeManager.move(player, ModeManager.Mode.LOBBY, this);
         }
         editor.close();
-
-        try {
-            codeWorld.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
         evaluator.stop();
-        playWorld.closeSoon(callback);
+
+        Bukkit.unloadWorld(playWorld, true);
+        Bukkit.unloadWorld(codeWorld, true);
     }
 
-    public Set<ServerPlayerEntity> getPlayers() {
-        HashSet<ServerPlayerEntity> out = new HashSet<>();
+    public Set<Player> getPlayers() {
+        HashSet<Player> out = new HashSet<>();
         out.addAll(playWorld.getPlayers());
         out.addAll(codeWorld.getPlayers());
-        out.removeIf(p -> p instanceof DummyPlayer);
+        out.removeIf(DummyManager::isDummy);
         return out;
     }
 
@@ -103,12 +110,12 @@ public class Space {
         }
     }
 
-    public void enterPlay(ServerPlayerEntity player) {
+    public void enterPlay(Player player) {
         evaluator.onJoin(player);
     }
 
-    public void enterBuild(ServerPlayerEntity player) {
-        player.changeGameMode(GameMode.CREATIVE);
+    public void enterBuild(Player player) {
+        player.setGameMode(GameMode.CREATIVE);
     }
 
     public Path path() {
@@ -117,15 +124,25 @@ public class Space {
 
     public void reload() {
         dummyManager.reset();
-        for (ServerPlayerEntity player : new ArrayList<>(playWorld.getPlayers())) {
-            if (info.isOwnerOrDeveloper(player.getUuid())) {
+        for (Player player : new ArrayList<>(playWorld.getPlayers())) {
+            if (info.isOwnerOrDeveloper(player.getUniqueId())) {
                 ModeManager.move(player, ModeManager.Mode.CODE, this);
             } else {
                 ModeManager.move(player, ModeManager.Mode.LOBBY, this);
             }
         }
         evaluator.stop();
-        playWorld.getChunkManager().chunkLoadingManager.unloadChunks(() -> true);
+        for (Chunk c : playWorld.getLoadedChunks()) {
+            playWorld.unloadChunk(c.getX(), c.getZ());
+        }
         evaluator = new CodeEvaluator(this);
+    }
+
+    public boolean ownsWorld(World w) {
+        return w == playWorld || w == codeWorld;
+    }
+
+    public boolean isUnloaded() {
+        return unloaded;
     }
 }

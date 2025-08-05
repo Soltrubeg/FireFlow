@@ -5,12 +5,12 @@ import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.node.SingleGenericNode;
 import de.blazemcworld.fireflow.code.type.StringType;
 import de.blazemcworld.fireflow.code.type.WireType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class GetVariableNode<T> extends SingleGenericNode<T> {
 
     public GetVariableNode(WireType<T> type) {
-        super("get_variable", type == null ? "Get Variable" : "Get " + type.getName() + " Variable", "Returns the value of a variable.", Items.IRON_INGOT, type);
+        super("get_variable", type == null ? "Get Variable" : "Get " + type.getName() + " Variable", "Returns the value of a variable.", Material.IRON_INGOT, type);
 
         Input<String> name = new Input<>("name", "Name", StringType.INSTANCE);
         Input<String> scope = new Input<>("scope", "Scope", StringType.INSTANCE)

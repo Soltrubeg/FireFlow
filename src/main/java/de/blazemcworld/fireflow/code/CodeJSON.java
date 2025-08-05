@@ -3,7 +3,6 @@ package de.blazemcworld.fireflow.code;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.mojang.serialization.DataResult;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.node.NodeList;
 import de.blazemcworld.fireflow.code.node.impl.function.FunctionCallNode;
@@ -16,9 +15,7 @@ import de.blazemcworld.fireflow.code.widget.NodeIOWidget;
 import de.blazemcworld.fireflow.code.widget.NodeWidget;
 import de.blazemcworld.fireflow.code.widget.WidgetVec;
 import de.blazemcworld.fireflow.code.widget.WireWidget;
-import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import org.bukkit.Material;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -168,7 +165,7 @@ public class CodeJSON {
         for (FunctionDefinition function : functions) {
             JsonObject obj = new JsonObject();
             obj.addProperty("name", function.name);
-            obj.addProperty("icon", Registries.ITEM.getId(function.icon).getPath());
+            obj.addProperty("icon", function.icon.key().value());
             JsonArray inputs = new JsonArray();
             for (Node.Output<?> input : function.inputsNode.outputs) {
                 JsonObject inputObj = new JsonObject();
@@ -440,8 +437,9 @@ public class CodeJSON {
         for (JsonElement function : json) {
             JsonObject obj = function.getAsJsonObject();
             String name = obj.get("name").getAsString();
-            DataResult<Identifier> id = Identifier.validate(obj.get("icon").getAsString());
-            FunctionDefinition functionDefinition = new FunctionDefinition(name, id.isError() ? Items.COMMAND_BLOCK : Registries.ITEM.getOptionalValue(id.getOrThrow()).orElse(Items.COMMAND_BLOCK));
+            Material m = Material.getMaterial(obj.get("icon").getAsString());
+            if (m == null || !m.isItem()) m = Material.COMMAND_BLOCK;
+            FunctionDefinition functionDefinition = new FunctionDefinition(name, m);
 
             for (JsonElement input : obj.getAsJsonArray("inputs")) {
                 JsonObject inputObj = input.getAsJsonObject();

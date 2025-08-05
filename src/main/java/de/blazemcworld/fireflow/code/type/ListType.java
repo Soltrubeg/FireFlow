@@ -3,9 +3,9 @@ package de.blazemcworld.fireflow.code.type;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import de.blazemcworld.fireflow.code.value.ListValue;
-import net.minecraft.item.Items;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Formatting;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
+import org.bukkit.Material;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,7 @@ public class ListType<T> extends WireType<ListValue<T>> {
     private static final WeakHashMap<WireType<?>, ListType<?>> instances = new WeakHashMap<>();
 
     private ListType(WireType<T> type) {
-        super("list", computeColor(type), Items.BOOKSHELF);
+        super("list", computeColor(type), Material.BOOKSHELF);
         this.elementType = type;
     }
 
@@ -33,12 +33,12 @@ public class ListType<T> extends WireType<ListValue<T>> {
     }
 
     private static TextColor computeColor(WireType<?> type) {
-        if (type == null) return TextColor.fromFormatting(Formatting.WHITE);
-        int rgb = type.color.getRgb();
+        if (type == null) return NamedTextColor.WHITE;
+        int rgb = type.color.value();
         int r = (rgb >> 16) & 0xFF / 2;
         int g = (rgb >> 8) & 0xFF / 2 + 127;
         int b = rgb & 0xFF / 2;
-        return TextColor.fromRgb(r << 16 | g << 8 | b);
+        return TextColor.color(r << 16 | g << 8 | b);
     }
 
     @Override

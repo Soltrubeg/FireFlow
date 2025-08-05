@@ -5,11 +5,11 @@ import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.type.StringType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class IncrementVariableNode extends Node {
     public IncrementVariableNode() {
-        super("increment_variable", "Increment Variable", "Increases the value of a number variable by one.", Items.NETHERITE_SCRAP);
+        super("increment_variable", "Increment Variable", "Increases the value of a number variable by one.", Material.NETHERITE_SCRAP);
 
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
         Input<String> name = new Input<>("name", "Name", StringType.INSTANCE);

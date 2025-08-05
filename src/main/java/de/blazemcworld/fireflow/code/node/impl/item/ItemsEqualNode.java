@@ -3,12 +3,12 @@ package de.blazemcworld.fireflow.code.node.impl.item;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.ConditionType;
 import de.blazemcworld.fireflow.code.type.ItemType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.Material;
 
 public class ItemsEqualNode extends Node {
     public ItemsEqualNode() {
-        super("items_equal", "Items Equal", "Checks if two items are equal", Items.ANVIL);
+        super("items_equal", "Items Equal", "Checks if two items are equal", Material.ANVIL);
 
         Input<ItemStack> first = new Input<>("first", "First", ItemType.INSTANCE);
         Input<ItemStack> second = new Input<>("second", "Second", ItemType.INSTANCE);
@@ -18,7 +18,7 @@ public class ItemsEqualNode extends Node {
         isCase.valueFrom((ctx) -> {
             ItemStack firstItem = first.getValue(ctx);
             ItemStack secondItem = second.getValue(ctx);
-            return ItemStack.areItemsAndComponentsEqual(firstItem, secondItem) && (!checkCount.getValue(ctx) || firstItem.getCount() == secondItem.getCount());
+            return checkCount.getValue(ctx) ? firstItem.equals(secondItem) : firstItem.isSimilar(secondItem);
         });
     }
 

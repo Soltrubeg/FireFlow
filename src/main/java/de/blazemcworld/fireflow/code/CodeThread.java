@@ -12,11 +12,12 @@ public class CodeThread {
     public final VariableStore threadVariables = new VariableStore();
     public FunctionScope functionScope = new FunctionScope(null, null);
     private boolean paused = false;
-    public EventContext context = new EventContext(EventType.UNSPECIFIED);
+    public final EventContext context;
     private boolean isDebug = false;
 
-    public CodeThread(CodeEvaluator evaluator) {
+    public CodeThread(CodeEvaluator evaluator, EventContext context) {
         this.evaluator = evaluator;
+        this.context = context == null ? new EventContext(evaluator) : context;
     }
 
     @SuppressWarnings("unchecked")
@@ -54,14 +55,23 @@ public class CodeThread {
 
     public void clearQueue() {
         if (evaluator.isStopped()) return;
+        long last = System.nanoTime();
         while (!todo.isEmpty() && !paused) {
             todo.pop().run();
+            long now = System.nanoTime();
+            evaluator.cpuUsed(now - last);
+            last = now;
+            if (evaluator.shouldWait()) {
+                pause();
+                evaluator.nextTick(this::resume);
+                return;
+            }
             if (evaluator.isStopped()) return;
         }
     }
 
     public CodeThread subThread() {
-        CodeThread thread = new CodeThread(evaluator);
+        CodeThread thread = new CodeThread(evaluator, context);
         thread.functionScope = functionScope.simpleCopy();
         thread.isDebug = isDebug;
         return thread;
@@ -80,17 +90,8 @@ public class CodeThread {
         isDebug = true;
     }
 
-    public static class EventContext {
-        public boolean cancelled = false;
-        public final EventType type;
-        public double eventNumber = 0; // Used as damage for damage events, otherwise ignored
-
-        public EventContext(EventType type) {
-            this.type = type;
-        }
-    }
-
-    public enum EventType {
-        UNSPECIFIED, DAMAGE_EVENT
+    public void handleEvent() {
+        evaluator.grantCpuBonus();
+        clearQueue();
     }
 }

@@ -6,7 +6,7 @@ import de.blazemcworld.fireflow.code.type.ListType;
 import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.WireType;
 import de.blazemcworld.fireflow.code.value.ListValue;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class IndexInListNode<T> extends SingleGenericNode<T> {
 
@@ -15,7 +15,7 @@ public class IndexInListNode<T> extends SingleGenericNode<T> {
             "index_in_list", 
              type == null ? "Index In List" : "Index In " + type.getName() + " List", 
              "Finds the index of a value in a list. Returns -1 if not found.", 
-             Items.COMPASS, 
+             Material.COMPASS,
              type
         );
 

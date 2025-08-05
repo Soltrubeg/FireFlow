@@ -4,9 +4,9 @@ import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.ListType;
 import de.blazemcworld.fireflow.code.type.StringType;
 import de.blazemcworld.fireflow.code.value.ListValue;
-import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,14 +17,14 @@ public class BlockIdListNode extends Node {
 
     private static List<String> collect() {
         List<String> list = new ArrayList<>();
-        for (Identifier id : Registries.BLOCK.getIds()) {
-            list.add(id.getPath());
+        for (NamespacedKey id : Registry.BLOCK.keyStream().toList()) {
+            list.add(id.getKey());
         }
         return list;
     }
 
     public BlockIdListNode() {
-        super("block_id_list", "Block ID List", "Returns a list of all block ids in minecraft.", Items.KNOWLEDGE_BOOK);
+        super("block_id_list", "Block ID List", "Returns a list of all block ids in minecraft.", Material.KNOWLEDGE_BOOK);
 
         Output<ListValue<String>> list = new Output<>("list", "List", ListType.of(StringType.INSTANCE));
         list.valueFrom(ctx -> constant);

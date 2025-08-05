@@ -5,13 +5,13 @@ import de.blazemcworld.fireflow.code.type.ItemType;
 import de.blazemcworld.fireflow.code.type.PlayerType;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.value.PlayerValue;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.Material;
 
 public class GivePlayerItemNode extends Node {
 
     public GivePlayerItemNode() {
-        super("give_player_item", "Give Player Item", "Gives the player an item", Items.CHEST_MINECART);
+        super("give_player_item", "Give Player Item", "Gives the player an item", Material.CHEST_MINECART);
 
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
         Input<PlayerValue> player = new Input<>("player", "Player", PlayerType.INSTANCE);
@@ -19,7 +19,7 @@ public class GivePlayerItemNode extends Node {
         Output<Void> next = new Output<>("next", "Next", SignalType.INSTANCE);
 
         signal.onSignal((ctx) -> {
-            player.getValue(ctx).tryUse(ctx, p -> p.giveItemStack(item.getValue(ctx)));
+            player.getValue(ctx).tryUse(ctx, p -> p.getInventory().addItem(item.getValue(ctx)));
             ctx.sendSignal(next);
         });
     }

@@ -1,7 +1,7 @@
 package de.blazemcworld.fireflow.code.widget;
 
 import de.blazemcworld.fireflow.code.CodeInteraction;
-import net.minecraft.text.Text;
+import net.kyori.adventure.text.Component;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -15,7 +15,7 @@ public class ChoiceWidget extends Widget {
         root = new BorderWidget<>(new GridWidget(pos, choices.size() / 30 + 1));
 
         for (String choice : choices) {
-            ButtonWidget button = new ButtonWidget(new TextWidget(pos, Text.literal(choice)));
+            ButtonWidget button = new ButtonWidget(new TextWidget(pos, Component.text(choice)));
             button.handler = interaction -> {
                 if (interaction.type() != CodeInteraction.Type.RIGHT_CLICK) return false;
                 remove();

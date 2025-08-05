@@ -4,13 +4,12 @@ import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.ListType;
 import de.blazemcworld.fireflow.code.type.StringType;
 import de.blazemcworld.fireflow.code.value.ListValue;
-import net.minecraft.item.Items;
-
 import java.util.List;
+import org.bukkit.Material;
 
 public class SplitStringNode extends Node {
     public SplitStringNode() {
-        super("split_string", "Split String", "Splits a string into an list based on a separating string", Items.SHEARS);
+        super("split_string", "Split String", "Splits a string into an list based on a separating string", Material.SHEARS);
 
         Input<String> inputString = new Input<>("inputString", "Input String", StringType.INSTANCE);
         Input<String> separator = new Input<>("separator", "Separator", StringType.INSTANCE);

@@ -1,21 +1,22 @@
 package de.blazemcworld.fireflow.code.node.impl.event.meta;
 
-import de.blazemcworld.fireflow.code.CodeEvaluator;
 import de.blazemcworld.fireflow.code.CodeThread;
+import de.blazemcworld.fireflow.code.EventContext;
+import de.blazemcworld.fireflow.code.node.EventNode;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.PlayerType;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.value.PlayerValue;
-import net.minecraft.item.Items;
-import net.minecraft.server.network.ServerPlayerEntity;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
 
-public class OnPlayerLeaveNode extends Node {
+public class OnPlayerLeaveNode extends Node implements EventNode {
 
     private final Output<Void> signal;
     private final Output<PlayerValue> player;
 
     public OnPlayerLeaveNode() {
-        super("on_player_leave", "On Player Leave", "Emits a signal when a player leaves.", Items.IRON_DOOR);
+        super("on_player_leave", "On Player Leave", "Emits a signal when a player leaves.", Material.IRON_DOOR);
 
         signal = new Output<>("signal", "Signal", SignalType.INSTANCE);
         player = new Output<>("player", "Player", PlayerType.INSTANCE);
@@ -26,11 +27,15 @@ public class OnPlayerLeaveNode extends Node {
     public Node copy() {
         return new OnPlayerLeaveNode();
     }
-
-    public void onLeave(CodeEvaluator codeEvaluator, ServerPlayerEntity player) {
-        CodeThread thread = codeEvaluator.newCodeThread();
-        thread.setScopeValue(this.player, new PlayerValue(player));
-        thread.sendSignal(signal);
-        thread.clearQueue();
+    @Override
+    public void handleEvent(EventContext context) {
+        if (context.customEvent instanceof LeaveEvent(Player p)) {
+            CodeThread thread = context.newCodeThread();
+            thread.setScopeValue(player, new PlayerValue(p));
+            thread.sendSignal(signal);
+            thread.clearQueue();
+        }
     }
+
+    public record LeaveEvent(Player player) {}
 }

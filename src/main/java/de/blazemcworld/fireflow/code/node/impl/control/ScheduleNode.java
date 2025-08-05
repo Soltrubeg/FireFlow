@@ -4,14 +4,13 @@ import de.blazemcworld.fireflow.code.CodeThread;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.SignalType;
-import net.minecraft.item.Items;
-
 import java.util.concurrent.atomic.AtomicInteger;
+import org.bukkit.Material;
 
 public class ScheduleNode extends Node {
 
     public ScheduleNode() {
-        super("schedule", "Schedule", "Schedules a signal to be emitted after a given amount of ticks.", Items.CLOCK);
+        super("schedule", "Schedule", "Schedules a signal to be emitted after a given amount of ticks.", Material.CLOCK);
 
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
         Input<Double> delay = new Input<>("delay", "Delay", NumberType.INSTANCE);

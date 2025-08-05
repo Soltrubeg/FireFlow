@@ -6,14 +6,13 @@ import de.blazemcworld.fireflow.code.type.ConditionType;
 import de.blazemcworld.fireflow.code.type.ListType;
 import de.blazemcworld.fireflow.code.type.WireType;
 import de.blazemcworld.fireflow.code.value.ListValue;
-import net.minecraft.item.Items;
-
 import java.util.HashSet;
+import org.bukkit.Material;
 
 public class ListContainsNode<T> extends SingleGenericNode<T> {
 
     public ListContainsNode(WireType<T> type) {
-        super("list_contains", "List Contains", "Checks if a list contains all specified values", Items.ARROW, type);
+        super("list_contains", "List Contains", "Checks if a list contains all specified values", Material.ARROW, type);
 
         Input<ListValue<T>> list = new Input<>("list", "List", ListType.of(type));
         Varargs<T> check = new Varargs<>("value", "Value", type);

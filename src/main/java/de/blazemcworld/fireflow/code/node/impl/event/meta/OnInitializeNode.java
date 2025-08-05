@@ -1,17 +1,18 @@
 package de.blazemcworld.fireflow.code.node.impl.event.meta;
 
-import de.blazemcworld.fireflow.code.CodeEvaluator;
 import de.blazemcworld.fireflow.code.CodeThread;
+import de.blazemcworld.fireflow.code.EventContext;
+import de.blazemcworld.fireflow.code.node.EventNode;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.SignalType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
-public class OnInitializeNode extends Node {
+public class OnInitializeNode extends Node implements EventNode {
 
     private final Output<Void> signal;
 
     public OnInitializeNode() {
-        super("on_initialize", "On Initialize", "Emits a signal when the space loads or reloads.", Items.CHERRY_SAPLING);
+        super("on_initialize", "On Initialize", "Emits a signal when the space loads or reloads.", Material.CHERRY_SAPLING);
 
         signal = new Output<>("signal", "Signal", SignalType.INSTANCE);
     }
@@ -21,10 +22,14 @@ public class OnInitializeNode extends Node {
         return new OnInitializeNode();
     }
 
-    public void emit(CodeEvaluator evaluator) {
-        CodeThread thread = evaluator.newCodeThread();
+    @Override
+    public void handleEvent(EventContext context) {
+        if (context.customEvent != EVENT) return;
+
+        CodeThread thread = context.newCodeThread();
         thread.sendSignal(signal);
         thread.clearQueue();
     }
 
+    public static final Object EVENT = new Object();
 }

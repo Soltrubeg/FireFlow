@@ -3,26 +3,26 @@ package de.blazemcworld.fireflow.code.node.impl.position;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.PositionType;
-import de.blazemcworld.fireflow.code.value.Position;
-import net.minecraft.item.Items;
+import org.bukkit.Location;
+import org.bukkit.Material;
 
 public class UnpackPositionNode extends Node {
 
     public UnpackPositionNode() {
-        super("unpack_position", "Unpack Position", "Unpacks a position into its components", Items.GOLD_INGOT);
+        super("unpack_position", "Unpack Position", "Unpacks a position into its components", Material.GOLD_INGOT);
 
-        Input<Position> position = new Input<>("position", "Position", PositionType.INSTANCE);
+        Input<Location> position = new Input<>("position", "Position", PositionType.INSTANCE);
         Output<Double> x = new Output<>("x", "X", NumberType.INSTANCE);
         Output<Double> y = new Output<>("y", "Y", NumberType.INSTANCE);
         Output<Double> z = new Output<>("z", "Z", NumberType.INSTANCE);
         Output<Double> pitch = new Output<>("pitch", "Pitch", NumberType.INSTANCE);
         Output<Double> yaw = new Output<>("yaw", "Yaw", NumberType.INSTANCE);
 
-        x.valueFrom(ctx -> position.getValue(ctx).xyz().x);
-        y.valueFrom(ctx -> position.getValue(ctx).xyz().y);
-        z.valueFrom(ctx -> position.getValue(ctx).xyz().z);
-        pitch.valueFrom(ctx -> (double) position.getValue(ctx).pitch());
-        yaw.valueFrom(ctx -> (double) position.getValue(ctx).yaw());
+        x.valueFrom(ctx -> position.getValue(ctx).x());
+        y.valueFrom(ctx -> position.getValue(ctx).y());
+        z.valueFrom(ctx -> position.getValue(ctx).z());
+        pitch.valueFrom(ctx -> (double) position.getValue(ctx).getPitch());
+        yaw.valueFrom(ctx -> (double) position.getValue(ctx).getYaw());
     }
 
     @Override

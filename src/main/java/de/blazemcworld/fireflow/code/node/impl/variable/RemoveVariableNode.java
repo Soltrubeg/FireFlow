@@ -4,14 +4,14 @@ import de.blazemcworld.fireflow.code.VariableStore;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.type.StringType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class RemoveVariableNode extends Node {
 
     public RemoveVariableNode() {
         super(
                 "remove_variable", "Remove Variable",
-                "Removes a variable from a scope.", Items.TNT
+                "Removes a variable from a scope.", Material.TNT
         );
 
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);

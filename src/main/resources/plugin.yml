@@ -1,0 +1,7 @@
+name: FireFlow
+version: 1.0
+main: de.blazemcworld.fireflow.FireFlow
+api-version: 1.21
+depend:
+  - LuckPerms
+  - FastAsyncWorldEdit

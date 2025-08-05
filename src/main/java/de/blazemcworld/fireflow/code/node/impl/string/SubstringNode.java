@@ -3,11 +3,11 @@ package de.blazemcworld.fireflow.code.node.impl.string;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.StringType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class SubstringNode extends Node {
     public SubstringNode() {
-        super("substring", "Substring", "Returns a portion of a string", Items.PAPER);
+        super("substring", "Substring", "Returns a portion of a string", Material.PAPER);
 
         Input<String> input = new Input<>("input", "Input", StringType.INSTANCE);
         Input<Double> start = new Input<>("start", "Start", NumberType.INSTANCE);

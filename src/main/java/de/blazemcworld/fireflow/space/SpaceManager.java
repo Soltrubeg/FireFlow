@@ -1,38 +1,41 @@
 package de.blazemcworld.fireflow.space;
 
+import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import de.blazemcworld.fireflow.FireFlow;
-import de.blazemcworld.fireflow.code.CodeWorld;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.minecraft.registry.Registries;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
 import org.apache.commons.io.FileUtils;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.logging.Level;
 
-public class SpaceManager {
+public class SpaceManager implements Listener {
 
     private static final HashMap<Integer, Space> spaces = new HashMap<>();
     public static final HashMap<Integer, SpaceInfo> info = new HashMap<>();
+    private static final WeakHashMap<World, Space> world2space = new WeakHashMap<>();
     public static int lastId = 0;
+    private static int nextSave = 200;
 
-    private static void save(boolean stop) {
+    public static void save(boolean stop) {
         try {
             JsonObject data = new JsonObject();
             JsonObject spaces = new JsonObject();
             for (SpaceInfo spaceInfo : info.values()) {
                 JsonObject space = new JsonObject();
                 space.addProperty("name", spaceInfo.name);
-                space.addProperty("icon", Registries.ITEM.getId(spaceInfo.icon).toString());
+                space.addProperty("icon", spaceInfo.icon.key().value());
                 space.addProperty("owner", spaceInfo.owner.toString());
                 JsonArray developers = new JsonArray();
                 for (UUID contributor : spaceInfo.developers) {
@@ -51,37 +54,32 @@ public class SpaceManager {
             
             Files.writeString(Path.of("spaces.json"), data.toString());
         } catch (IOException e) {
-            FireFlow.LOGGER.error("Failed to save spaces.json!", e);
+            FireFlow.logger.log(Level.WARNING, "Failed to save spaces.json!", e);
         }
 
         for (Space space : getLoadedSpaces()) {
             space.save();
-            if (space.isInactive() || stop) unloadSpace(space, null);
+            if (space.isInactive() || stop) unloadSpace(space);
         }
     }
 
-    public static void unloadSpace(Space space, Runnable callback) {
-        synchronized (spaces) {
-            spaces.remove(space.info.id);
-        }
-        space.unload(callback);
-        FireFlow.LOGGER.info("Unloading space {}", space.info.id);
+    @EventHandler
+    public void onTick(ServerTickEndEvent event) {
+        nextSave--;
+        for (Space s : spaces.values()) s.tick();
+        if (nextSave > 0) return;
+        nextSave = 200;
+        save(false);
+
+    }
+
+    public static void unloadSpace(Space space) {
+        spaces.remove(space.info.id);
+        space.unload();
+        FireFlow.logger.info("Unloading space " + space.info.id);
     }
 
     public static void load() {
-        ServerLifecycleEvents.SERVER_STOPPING.register((srv) -> {
-            save(true);
-        });
-
-        int[] nextSave = {100};
-        ServerTickEvents.END_SERVER_TICK.register((srv) -> {
-            nextSave[0]--;
-            for (Space s : spaces.values()) s.tick();
-            if (nextSave[0] > 0) return;
-            nextSave[0] = 100;
-            save(false);
-        });
-
         try {
             if (!Files.exists(Path.of("spaces.json"))) return;
 
@@ -93,7 +91,8 @@ public class SpaceManager {
                 JsonObject space = raw.getValue().getAsJsonObject();
                 SpaceInfo spaceInfo = new SpaceInfo(Integer.parseInt(raw.getKey()));
                 spaceInfo.name = space.get("name").getAsString();
-                spaceInfo.icon = Registries.ITEM.get(Identifier.of(space.get("icon").getAsString()));
+                spaceInfo.icon = Material.getMaterial(space.get("icon").getAsString());
+                if (spaceInfo.icon == null) spaceInfo.icon = Material.PAPER;
                 spaceInfo.owner = UUID.fromString(space.get("owner").getAsString());
                 spaceInfo.developers = new HashSet<>();
                 spaceInfo.builders = new HashSet<>();
@@ -108,57 +107,51 @@ public class SpaceManager {
                 info.put(spaceInfo.id, spaceInfo);
             }
         } catch (IOException e) {
-            FireFlow.LOGGER.error("Failed to load spaces.json!", e);
+            FireFlow.logger.log(Level.WARNING, "Failed to load spaces.json!", e);
         }
     }
 
     public static Space getOrLoadSpace(SpaceInfo info) {
-       Space space;
-        synchronized (spaces) {
-            space = spaces.get(info.id);
-        }
+       Space space = spaces.get(info.id);
         if (space == null) {
-            FireFlow.LOGGER.info("Loading space {}", info.id);
+            FireFlow.logger.info("Loading space " + info.id);
             space = new Space(info);
-            synchronized (spaces) {
-                spaces.put(info.id, space);
-            }
+            spaces.put(info.id, space);
         }
         return space;
     }
 
-    public static Space getSpaceForPlayer(ServerPlayerEntity player) {
-        return getSpaceForWorld(player.getServerWorld());
+    public static Space getSpaceForPlayer(Player player) {
+        return getSpaceForWorld(player.getWorld());
     }
 
-    public static Space getSpaceForWorld(ServerWorld world) {
-        if (world instanceof PlayWorld p) return p.space;
-        if (world instanceof CodeWorld c) return c.space;
-        return null;
+    public static Space getSpaceForWorld(World world) {
+        return world2space.computeIfAbsent(world, w -> {
+            for (Space s : getLoadedSpaces()) {
+                if (s.ownsWorld(w)) return s;
+            }
+            return null;
+        });
     }
 
     public static List<Space> activeSpaces() {
         List<Space> out = new ArrayList<>();
-        synchronized (spaces) {
-            for (Space s : spaces.values()) {
-                if (!s.getPlayers().isEmpty()) out.add(s);
-            }
+        for (Space s : spaces.values()) {
+            if (!s.getPlayers().isEmpty()) out.add(s);
         }
         return out;
     }
 
-    public static List<SpaceInfo> getOwnedSpaces(ServerPlayerEntity player) {
+    public static List<SpaceInfo> getOwnedSpaces(Player player) {
         List<SpaceInfo> out = new ArrayList<>();
         for (SpaceInfo i : info.values()) {
-            if (i.owner.equals(player.getUuid())) out.add(i);
+            if (i.owner.equals(player.getUniqueId())) out.add(i);
         }
         return out;
     }
 
     public static Space getIfLoaded(SpaceInfo info) {
-        synchronized (spaces) {
-            return spaces.get(info.id);
-        }
+        return spaces.get(info.id);
     }
 
     public static SpaceInfo getInfo(int id) {
@@ -166,23 +159,20 @@ public class SpaceManager {
     }
 
     public static List<Space> getLoadedSpaces() {
-        synchronized (spaces) {
-            return new ArrayList<>(spaces.values());
-        }
+        return new ArrayList<>(spaces.values());
     }
 
     public static void delete(Space space) {
-        unloadSpace(space, () -> Thread.startVirtualThread(() -> {
-            try {
-                FileUtils.deleteDirectory(space.path().toFile());
+        unloadSpace(space);
+        try {
+            FileUtils.deleteDirectory(space.path().toFile());
 
-                FileUtils.deleteDirectory(FireFlow.server.session.getWorldDirectory(space.playWorld.getRegistryKey()).toFile());
-                FileUtils.deleteDirectory(FireFlow.server.session.getWorldDirectory(space.codeWorld.getRegistryKey()).toFile());
+            FileUtils.deleteDirectory(new File("play-" + space.info.id));
+            FileUtils.deleteDirectory(new File("code-" + space.info.id));
 
-                info.remove(space.info.id);
-            } catch (IOException e) {
-                FireFlow.LOGGER.error("Failed to delete space {}!", space.info.id, e);
-            }
-        }));
+            info.remove(space.info.id);
+        } catch (IOException e) {
+            FireFlow.logger.log(Level.WARNING, "Failed to delete space " + space.info.id, e);
+        }
     }
 }

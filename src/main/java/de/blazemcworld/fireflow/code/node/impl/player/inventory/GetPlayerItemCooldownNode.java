@@ -5,26 +5,23 @@ import de.blazemcworld.fireflow.code.type.ItemType;
 import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.PlayerType;
 import de.blazemcworld.fireflow.code.value.PlayerValue;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.Material;
 
 public class GetPlayerItemCooldownNode extends Node {
 
     public GetPlayerItemCooldownNode() {
-        super("get_player_item_cooldown", "Get Player Item Cooldown", 
-            "Gets the remaining cooldown percentage (0-1) for a specific item for a player", Items.POPPED_CHORUS_FRUIT);
+        super("get_player_item_cooldown", "Get Player Item Cooldown", "Gets the remaining cooldown ticks for a specific item for a player", Material.POPPED_CHORUS_FRUIT);
 
         Input<PlayerValue> player = new Input<>("player", "Player", PlayerType.INSTANCE);
         Input<ItemStack> item = new Input<>("item", "Item", ItemType.INSTANCE);
         
         Output<Double> cooldown = new Output<>("cooldown", "Cooldown", NumberType.INSTANCE);
 
-        cooldown.valueFrom((ctx) -> {
-            return player.getValue(ctx).tryGet(ctx, p -> {
-                ItemStack stack = item.getValue(ctx);
-                return (double) p.getItemCooldownManager().getCooldownProgress(stack, 0);
-            }, 0.0);
-        });
+        cooldown.valueFrom((ctx) -> player.getValue(ctx).tryGet(ctx, p -> {
+            ItemStack stack = item.getValue(ctx);
+            return (double) p.getCooldown(stack);
+        }, 0.0));
     }
 
     @Override

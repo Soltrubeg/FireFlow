@@ -7,12 +7,12 @@ import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.type.WireType;
 import de.blazemcworld.fireflow.code.value.ListValue;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class ListForEachNode<T> extends SingleGenericNode<T> {
 
     public ListForEachNode(WireType<T> type) {
-        super("list_for_each", type == null ? "List For Each" : type.getName() + " List For Each", "For each element in the list, sends the element to the value output and the each output.", Items.HOPPER, type);
+        super("list_for_each", type == null ? "List For Each" : type.getName() + " List For Each", "For each element in the list, sends the element to the value output and the each output.", Material.HOPPER, type);
 
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
         Input<ListValue<T>> list = new Input<>("list", "List", ListType.of(type));

@@ -1,89 +1,92 @@
 package de.blazemcworld.fireflow.inventory;
 
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.LoreComponent;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.screen.NamedScreenHandlerFactory;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ConfirmationMenu extends InventoryMenu {
+public class ConfirmationMenu implements InventoryMenu {
 
+    private final Inventory inventory;
+    private final Player player;
     private final Runnable confirm;
     private final Runnable cancel;
     private boolean isAnswered = false;
 
-    private ConfirmationMenu(int syncId, ServerPlayerEntity player, String question, Runnable confirm, Runnable cancel) {
-        super(syncId, player);
+    private ConfirmationMenu(Player player, String message, Runnable confirm, Runnable cancel) {
+        this.player = player;
         this.confirm = confirm == null ? () -> {} : confirm;
         this.cancel = cancel == null ? () -> {} : cancel;
+        inventory = Bukkit.createInventory(this, 9 * 3, Component.text(message));
 
-        ItemStack cancelBtn = new ItemStack(Items.REDSTONE_BLOCK);
-        cancelBtn.set(DataComponentTypes.ITEM_NAME, Text.literal("Cancel").formatted(Formatting.RED));
+        ItemStack cancelBtn = new ItemStack(Material.REDSTONE_BLOCK);
+        ItemMeta meta = cancelBtn.getItemMeta();
+        meta.customName(Component.text("Cancel").color(NamedTextColor.RED));
+        cancelBtn.setItemMeta(meta);
 
-        ItemStack confirmBtn = new ItemStack(Items.EMERALD_BLOCK);
-        confirmBtn.set(DataComponentTypes.ITEM_NAME, Text.literal("Confirm").formatted(Formatting.GREEN));
+        ItemStack confirmBtn = new ItemStack(Material.EMERALD_BLOCK);
+        meta = confirmBtn.getItemMeta();
+        meta.customName(Component.text("Confirm").color(NamedTextColor.GREEN));
+        confirmBtn.setItemMeta(meta);
 
-        ItemStack questionStack = new ItemStack(Items.PAPER);
-        questionStack.set(DataComponentTypes.ITEM_NAME, Text.literal(question).formatted(Formatting.WHITE));
-        questionStack.set(DataComponentTypes.LORE, new LoreComponent(List.of(
-                Text.literal("Are you sure about this?").setStyle(Style.EMPTY.withItalic(false).withColor(Formatting.GRAY)),
-                Text.literal("If unsure, press cancel or close the inventory.").setStyle(Style.EMPTY.withItalic(false).withColor(Formatting.GRAY))
-        )));
-        setStack(10, questionStack);
+        ItemStack questionStack = new ItemStack(Material.PAPER);
+        meta = questionStack.getItemMeta();
+        meta.customName(Component.text(message).color(NamedTextColor.WHITE));
+        meta.lore(List.of(
+                Component.text("Are you sure about this?").decoration(TextDecoration.ITALIC, false).color(NamedTextColor.GRAY),
+                Component.text("If unsure, press cancel or close this menu.").decoration(TextDecoration.ITALIC, false).color(NamedTextColor.GRAY)
+        ));
+        questionStack.setItemMeta(meta);
 
-        setStack(11, cancelBtn);
-        setStack(14, confirmBtn);
+        inventory.setItem(10, cancelBtn);
+        inventory.setItem(13, questionStack);
+        inventory.setItem(16, confirmBtn);
+    }
+
+    public static void open(Player player, String message, Runnable confirm, Runnable cancel) {
+        player.openInventory(new ConfirmationMenu(player, message, confirm, cancel).getInventory());
     }
 
     @Override
-    public void onSlotClick(int slotIndex, int button, SlotActionType actionType, PlayerEntity player) {
-        if (this.player != player) return;
+    public @NotNull Inventory getInventory() {
+        return inventory;
+    }
+
+    @Override
+    public void handleClick(InventoryClickEvent event) {
+        if (event.getWhoClicked() != player) return;
         if (isAnswered) return;
 
-        if (slotIndex == 11) {
+        if (event.getSlot() == 11) {
             isAnswered = true;
+            this.player.closeInventory();
             this.cancel.run();
-            this.player.closeHandledScreen();
             return;
         }
 
-        if (slotIndex == 14) {
+        if (event.getSlot() == 14) {
             isAnswered = true;
+            this.player.closeInventory();
             this.confirm.run();
-            this.player.closeHandledScreen();
             return;
         }
     }
 
     @Override
-    public void onClosed(PlayerEntity player) {
+    public void handleClose(InventoryCloseEvent event) {
         if (isAnswered) return;
         isAnswered = true;
-        this.cancel.run();
-    }
-
-    public static void open(ServerPlayerEntity player, String question, Runnable confirm, Runnable cancel) {
-        player.openHandledScreen(new NamedScreenHandlerFactory() {
-            @Override
-            public Text getDisplayName() {
-                return Text.literal("Active Spaces");
-            }
-
-            @Override
-            public ScreenHandler createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
-                return new ConfirmationMenu(syncId, (ServerPlayerEntity) player, question, confirm, cancel);
-            }
-        });
+        cancel.run();
     }
 
 }

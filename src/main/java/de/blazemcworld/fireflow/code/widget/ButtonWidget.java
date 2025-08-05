@@ -1,10 +1,9 @@
 package de.blazemcworld.fireflow.code.widget;
 
 import de.blazemcworld.fireflow.code.CodeInteraction;
-import net.minecraft.text.Text;
-
 import java.util.List;
 import java.util.function.Function;
+import net.kyori.adventure.text.Component;
 
 public class ButtonWidget extends Widget {
 
@@ -16,7 +15,7 @@ public class ButtonWidget extends Widget {
         this.looks = looks;
     }
 
-    public ButtonWidget(WidgetVec pos, Text text) {
+    public ButtonWidget(WidgetVec pos, Component text) {
         this(new TextWidget(pos, text));
     }
 

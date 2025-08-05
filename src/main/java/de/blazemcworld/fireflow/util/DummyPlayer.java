@@ -1,34 +1,33 @@
 package de.blazemcworld.fireflow.util;
 
 import com.mojang.authlib.GameProfile;
-import de.blazemcworld.fireflow.FireFlow;
 import de.blazemcworld.fireflow.space.DummyManager;
 import de.blazemcworld.fireflow.space.Space;
-import net.minecraft.network.ClientConnection;
-import net.minecraft.network.NetworkSide;
-import net.minecraft.network.PacketCallbacks;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.c2s.common.SyncedClientOptions;
-import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
-import net.minecraft.network.packet.s2c.play.PlayerRemoveS2CPacket;
-import net.minecraft.server.network.ConnectedClientData;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
+import io.netty.channel.ChannelFutureListener;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoRemovePacket;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.server.level.ClientInformation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import org.apache.commons.lang3.StringUtils;
+import org.bukkit.Bukkit;
+import org.bukkit.craftbukkit.CraftServer;
+import org.bukkit.craftbukkit.CraftWorld;
+import org.bukkit.event.entity.EntityRemoveEvent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class DummyPlayer extends ServerPlayerEntity {
+public class DummyPlayer extends ServerPlayer {
 
-    private static final GameProfile[] dummyProfiles = {
-            new GameProfile(UUID.fromString("a1a17bc1-912d-42f6-81de-18cdb9a482eb"), "Dummy-1"),
-            new GameProfile(UUID.fromString("b2b249fa-9cb6-476a-8e81-8e427a4a37cf"), "Dummy-2"),
-            new GameProfile(UUID.fromString("c3c3342c-7883-4cdf-bf22-0882d910edc5"), "Dummy-3"),
-            new GameProfile(UUID.fromString("d4d4be72-df27-4889-836e-903cc6e14436"), "Dummy-4"),
-            new GameProfile(UUID.fromString("e5e5bfb2-85a5-44e4-b70b-84e60450ed74"), "Dummy-5")
-    };
+    private static final DedicatedServer server = ((CraftServer) Bukkit.getServer()).getServer();
 
     public final int dummyId;
     public final Space space;
@@ -37,13 +36,13 @@ public class DummyPlayer extends ServerPlayerEntity {
     public boolean exitCalled = false;
 
     public DummyPlayer(Space space, int id) {
-        super(FireFlow.server, space.playWorld, dummyProfiles[id - 1], SyncedClientOptions.createDefault());
-        networkHandler = new ServerPlayNetworkHandler(FireFlow.server, new ClientConnection(NetworkSide.CLIENTBOUND), this, ConnectedClientData.createDefault(dummyProfiles[id - 1], false)) {
+        super(server, ((CraftWorld) space.playWorld).getHandle(), dummyProfile(id, space.info.id), ClientInformation.createDefault());
+        connection = new ServerGamePacketListenerImpl(server, new net.minecraft.network.Connection(PacketFlow.CLIENTBOUND), this, CommonListenerCookie.createInitial(dummyProfile(id, space.info.id), false)) {
             @Override
-            public void send(Packet<?> packet, @Nullable PacketCallbacks callbacks) {
-                if (packet instanceof EntityVelocityUpdateS2CPacket velPacket && velPacket.getEntityId() == getId()) {
+            public void send(@NotNull Packet<?> packet, @Nullable ChannelFutureListener callbacks) {
+                if (packet instanceof ClientboundSetEntityMotionPacket velPacket && velPacket.getId() == getId()) {
                     nextTick.add(() -> {
-                        setVelocity(velPacket.getVelocityX(), velPacket.getVelocityY(), velPacket.getVelocityZ());
+                        setDeltaMovement(velPacket.getXa(), velPacket.getYa(), velPacket.getZa());
                     });
                 }
             }
@@ -54,14 +53,14 @@ public class DummyPlayer extends ServerPlayerEntity {
     }
 
     @Override
-    public void remove(RemovalReason reason) {
+    public void remove(@NotNull RemovalReason reason, @Nullable EntityRemoveEvent.Cause cause) {
         if (!exitCalled) {
             exitCalled = true;
-            space.evaluator.exitPlay(this);
+            space.evaluator.exitPlay(this.getBukkitEntity());
         }
-        super.remove(reason);
+        super.remove(reason, cause);
         manager.forgetDummy(dummyId);
-        FireFlow.server.getPlayerManager().sendToAll(new PlayerRemoveS2CPacket(List.of(uuid)));
+        server.getPlayerList().broadcastAll(new ClientboundPlayerInfoRemovePacket(List.of(uuid)));
     }
 
     @Override
@@ -69,19 +68,26 @@ public class DummyPlayer extends ServerPlayerEntity {
         List<Runnable> tasks = new ArrayList<>(nextTick);
         nextTick.clear();
         for (Runnable task : tasks) task.run();
-        updateSupportingBlockPos(true, null);
-        setOnGround(supportingBlockPos.isPresent());
+        checkSupportingBlock(true, null);
+        setOnGround(mainSupportingBlockPos.isPresent());
         super.tick();
-        super.playerTick();
+        super.doTick();
     }
 
     @Override
-    public void playerTick() {
+    public void doTick() {
         // Moved into regular tick
     }
 
     @Override
-    public boolean isControlledByPlayer() {
+    public boolean isClientAuthoritative() {
         return false;
+    }
+
+    private static GameProfile dummyProfile(int dummyId, int spaceId) {
+        String id = String.valueOf((char) (dummyId + (int) 'a' - 1)) + dummyId;
+        String id4 = id.repeat(4) + "-";
+        String id2 = id.repeat(2) + "-";
+        return new GameProfile(UUID.fromString(id4 + id2 + id2 + id2 + StringUtils.leftPad(String.valueOf(spaceId), 12, '0')), "Dummy-" + dummyId);
     }
 }

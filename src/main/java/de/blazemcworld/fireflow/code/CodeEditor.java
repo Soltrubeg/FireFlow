@@ -3,7 +3,6 @@ package de.blazemcworld.fireflow.code;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.mojang.serialization.DataResult;
 import de.blazemcworld.fireflow.FireFlow;
 import de.blazemcworld.fireflow.code.action.CodeAction;
 import de.blazemcworld.fireflow.code.action.DeleteSelectAction;
@@ -18,18 +17,11 @@ import de.blazemcworld.fireflow.code.type.AllTypes;
 import de.blazemcworld.fireflow.code.widget.*;
 import de.blazemcworld.fireflow.space.Space;
 import me.xdrop.fuzzywuzzy.FuzzySearch;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.decoration.DisplayEntity;
-import net.minecraft.entity.decoration.InteractionEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Vec3d;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.*;
+import org.bukkit.entity.*;
+import org.bukkit.util.Vector;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -38,12 +30,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 public class CodeEditor {
     public final Space space;
-    public final CodeWorld world;
+    public final World world;
     public final Set<Widget> rootWidgets = new HashSet<>();
     public final Pathfinder pathfinder = new Pathfinder(this);
     public final HashMap<EditOrigin, Set<Widget>> lockedWidgets = new HashMap<>();
@@ -52,34 +45,40 @@ public class CodeEditor {
     private final Path codePath;
     private final Set<EditOrigin> webUsers = new HashSet<>();
     private final List<Runnable> tickTasks = new ArrayList<>();
+    private boolean newChunkLoaded = false;
 
-    public CodeEditor(Space space, CodeWorld world) {
+    public CodeEditor(Space space, World world) {
         this.space = space;
         this.world = world;
-        codePath = space.path().resolve("code.json");
+        codePath = space.path().resolve("code.json");;
+
+        Bukkit.getScheduler().runTaskTimer(FireFlow.instance, (s) -> {
+            if (space.isUnloaded()) {
+                s.cancel();
+                return;
+            }
+            tick();
+            for (Chunk c : world.getLoadedChunks()) {
+                c.setForceLoaded(c.getEntities().length != 0);
+            }
+        }, 1, 1);
     }
 
     public void enterCode(EditOrigin origin) {
-        ServerPlayerEntity player = origin.getPlayer();
+        Player player = origin.getPlayer();
         if (player != null) {
-            player.getAbilities().flying = true;
-            player.getAbilities().allowFlying = true;
-            player.sendAbilitiesUpdate();
+            player.setAllowFlight(true);
+            player.setFlying(true);
 
-            InteractionEntity helper = new InteractionEntity(EntityType.INTERACTION, world);
-            helper.setInteractionHeight(-0.5f);
-            helper.setInteractionWidth(-0.5f);
-            helper.setPosition(Vec3d.ZERO);
-            world.spawnEntity(helper);
-            helper.vehicle = player;
-            player.addPassenger(helper);
+            Interaction entity = (Interaction) world.spawnEntity(new Location(world, 0, 0, 0), EntityType.INTERACTION);
+            entity.setInteractionHeight(-0.5f);
+            entity.setInteractionWidth(-0.5f);
+            player.addPassenger(entity);
 
-            DisplayEntity.TextDisplayEntity name = new DisplayEntity.TextDisplayEntity(EntityType.TEXT_DISPLAY, world);
-            name.setText(player.getDisplayName());
-            name.setBillboardMode(DisplayEntity.BillboardMode.CENTER);
-            world.spawnEntity(name);
-            name.vehicle = player;
-            player.addPassenger(name);
+            TextDisplay display = (TextDisplay) world.spawnEntity(new Location(world, 0, 0, 0), EntityType.TEXT_DISPLAY);
+            display.text(player.displayName());
+            display.setBillboard(Display.Billboard.CENTER);
+            player.addPassenger(display);
         }
 
         if (origin.isWeb()) {
@@ -89,12 +88,11 @@ public class CodeEditor {
     }
 
     public void exitCode(EditOrigin origin) {
-        ServerPlayerEntity player = origin.getPlayer();
+        Player player = origin.getPlayer();
         if (player != null) {
-            for (Entity helper : new ArrayList<>(player.getPassengerList())) {
-                if (helper instanceof InteractionEntity
-                        || helper instanceof DisplayEntity.TextDisplayEntity) {
-                    helper.remove(Entity.RemovalReason.DISCARDED);
+            for (Entity helper : new ArrayList<>(player.getPassengers())) {
+                if (helper instanceof Interaction || helper instanceof TextDisplay) {
+                    helper.remove();
                 }
             }
         }
@@ -144,13 +142,13 @@ public class CodeEditor {
     }
 
     public Optional<WidgetVec> getCodeCursor(EditOrigin origin) {
-        ServerPlayerEntity player = origin.getPlayer();
+        Player player = origin.getPlayer();
         if (player == null) return origin.getCursor(this);
         if (player.getWorld() != world) return Optional.empty();
-        if (player.getRotationVec(0).getZ() <= 0.1) return Optional.empty();
-        double scale = Math.abs(player.getZ() - 16) / player.getRotationVec(0).getZ();
-        Vec3d pos = player.getEyePos().add(player.getRotationVec(0).multiply(scale));
-        if (world.getBottomY() > pos.getY() || world.getTopYInclusive() + 1 < pos.getY()) return Optional.empty();
+        if (player.getLocation().getDirection().getZ() <= 0.1) return Optional.empty();
+        double scale = Math.abs(player.getZ() - 16) / player.getLocation().getDirection().getZ();
+        Vector pos = player.getEyeLocation().toVector().add(player.getLocation().getDirection().multiply(scale));
+        if (world.getMinHeight() > pos.getY() || world.getMaxHeight() < pos.getY()) return Optional.empty();
         if (pos.getX() > 512 || pos.getX() < -512) return Optional.empty();
         return Optional.of(new WidgetVec(this, pos.getX(), pos.getY()));
     }
@@ -234,7 +232,7 @@ public class CodeEditor {
             return;
         }
 
-        FunctionDefinition function = new FunctionDefinition(name, Items.COMMAND_BLOCK);
+        FunctionDefinition function = new FunctionDefinition(name, Material.COMMAND_BLOCK);
         functions.put(name, function);
 
         Optional<WidgetVec> pos = getCodeCursor(player).map(WidgetVec::gridAligned);
@@ -434,15 +432,14 @@ public class CodeEditor {
         FunctionDefinition function = tryGetFunction(player);
         if (function == null) return;
 
-        DataResult<Identifier> id = Identifier.validate(icon);
-        Optional<Item> item = id.isSuccess() ? Registries.ITEM.getOptionalValue(id.getOrThrow()) : Optional.empty();
+        Material material = Material.getMaterial(icon);
 
-        if (item.isEmpty()) {
+        if (material == null || !material.isItem()) {
             player.sendError("Unknown item!");
             return;
         }
 
-        FunctionDefinition adjusted = new FunctionDefinition(function.name, item.get());
+        FunctionDefinition adjusted = new FunctionDefinition(function.name, material);
         for (Node.Output<?> input : function.inputsNode.outputs) {
             adjusted.addInput(input.id, input.type);
         }
@@ -522,7 +519,7 @@ public class CodeEditor {
             gz.write(json.toString().getBytes(StandardCharsets.UTF_8));
             gz.finish();
         } catch (Exception e) {
-            FireFlow.LOGGER.error("Error gzipping snippet!", e);
+            FireFlow.logger.log(Level.WARNING, "Error gzipping snippet!", e);
             player.sendError("Internal error!");
             return;
         }
@@ -583,7 +580,7 @@ public class CodeEditor {
             for (WireWidget w : wireWidgets) w.update();
             for (FunctionDefinition fn : definitions) functions.put(fn.name, fn);
         } catch (Exception e) {
-            FireFlow.LOGGER.warn("Error reading snippet!", e);
+            FireFlow.logger.log(Level.WARNING, "Error reading snippet!", e);
             player.sendError("Internal error!");
         }
     }
@@ -678,7 +675,7 @@ public class CodeEditor {
             if (!Files.exists(codePath.getParent())) Files.createDirectories(codePath.getParent());
             Files.writeString(codePath, data.toString());
         } catch (IOException e) {
-            FireFlow.LOGGER.error("Failed to save code.json for space " + space.info.id + "!", e);
+            FireFlow.logger.log(Level.WARNING, "Failed to save code.json for space " + space.info.id + "!", e);
         }
     }
 
@@ -705,11 +702,15 @@ public class CodeEditor {
             for (NodeWidget n : nodeWidgets) n.update();
             for (WireWidget w : wireWidgets) w.update();
         } catch (IOException e) {
-            FireFlow.LOGGER.error("Failed to load code.json for space " + space.info.id + "!", e);
+            FireFlow.logger.log(Level.WARNING, "Failed to load code.json for space " + space.info.id + "!", e);
         }
     }
 
     public void tick() {
+        if (newChunkLoaded) {
+            newChunkLoaded = false;
+            for (Widget w : rootWidgets) w.update();
+        }
         for (EditOrigin origin : webUsers) {
             origin.tick();
         }
@@ -735,20 +736,20 @@ public class CodeEditor {
         }
     }
 
-    public void authorizeWeb(String webId, ServerPlayerEntity approver) {
+    public void authorizeWeb(String webId, Player approver) {
         for (EditOrigin origin : webUsers) {
             if (origin.tryAuth(webId)) {
-                approver.sendMessage(Text.literal("Authorized web to edit code!").formatted(Formatting.GREEN), false);
-                for (ServerPlayerEntity player : space.getPlayers()) {
-                    if (!space.info.isOwnerOrDeveloper(player.getUuid())) continue;
+                approver.sendMessage(Component.text("Authorized web to edit code!").color(NamedTextColor.GREEN));
+                for (Player player : space.getPlayers()) {
+                    if (!space.info.isOwnerOrDeveloper(player.getUniqueId())) continue;
                     if (player == approver) continue;
-                    player.sendMessage(Text.literal(approver.getGameProfile().getName() + " authorized a web editor request!").formatted(Formatting.YELLOW), false);
+                    player.sendMessage(Component.text(approver.getName() + " authorized a web editor request!").color(NamedTextColor.YELLOW));
                 }
                 return;
             }
         }
 
-        approver.sendMessage(Text.literal("Could not find web editor with matching id!").formatted(Formatting.RED), false);
+        approver.sendMessage(Component.text("Could not find web editor with matching id!").color(NamedTextColor.RED));
     }
 
     public void close() {
@@ -762,5 +763,9 @@ public class CodeEditor {
         synchronized (tickTasks) {
             tickTasks.add(r);
         }
+    }
+
+    public void onChunkLoad() {
+        newChunkLoaded = true;
     }
 }

@@ -2,12 +2,12 @@ package de.blazemcworld.fireflow.code.node.impl.number;
 
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.NumberType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class ModuloNode extends Node {
 
     public ModuloNode() {
-        super("modulo_number", "Modulo", "Calculates the remainder of division between two numbers", Items.BONE_MEAL);
+        super("modulo_number", "Modulo", "Calculates the remainder of division between two numbers", Material.BONE_MEAL);
 
         Input<Double> left = new Input<>("left", "Left", NumberType.INSTANCE);
         Input<Double> right = new Input<>("right", "Right", NumberType.INSTANCE);

@@ -2,11 +2,11 @@ package de.blazemcworld.fireflow.code.node.impl.string;
 
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.StringType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class UppercaseNode extends Node {
     public UppercaseNode() {
-        super("uppercase", "To Uppercase", "Makes a string uppercase", Items.IRON_BLOCK);
+        super("uppercase", "To Uppercase", "Makes a string uppercase", Material.IRON_BLOCK);
 
         Input<String> input = new Input<>("input", "Input", StringType.INSTANCE);
         Output<String> output = new Output<>("output", "Output", StringType.INSTANCE);

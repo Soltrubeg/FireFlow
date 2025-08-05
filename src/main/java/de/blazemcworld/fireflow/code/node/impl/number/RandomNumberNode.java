@@ -3,11 +3,11 @@ package de.blazemcworld.fireflow.code.node.impl.number;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.StringType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class RandomNumberNode extends Node {
     public RandomNumberNode() {
-        super("random_number", "Random Number", "Generate a random number", Items.MULE_SPAWN_EGG);
+        super("random_number", "Random Number", "Generate a random number", Material.MULE_SPAWN_EGG);
         Input<String> mode = new Input<>("mode", "Mode", StringType.INSTANCE)
                 .options("Decimal", "WholeExclusive", "WholeInclusive");
         Input<Double> min = new Input<>("min", "Min", NumberType.INSTANCE);

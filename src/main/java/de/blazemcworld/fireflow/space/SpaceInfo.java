@@ -1,6 +1,6 @@
 package de.blazemcworld.fireflow.space;
 
-import net.minecraft.item.Item;
+import org.bukkit.Material;
 
 import java.util.Set;
 import java.util.UUID;
@@ -9,7 +9,7 @@ public class SpaceInfo {
 
     public final int id;
     public String name;
-    public Item icon;
+    public Material icon;
     public UUID owner;
     public Set<UUID> developers;
     public Set<UUID> builders;
@@ -26,4 +26,9 @@ public class SpaceInfo {
         return owner.equals(uuid) || builders.contains(uuid);
     }
 
+    public int playerCount() {
+        Space space = SpaceManager.getIfLoaded(this);
+        if (space == null) return 0;
+        return space.getPlayers().size();
+    }
 }

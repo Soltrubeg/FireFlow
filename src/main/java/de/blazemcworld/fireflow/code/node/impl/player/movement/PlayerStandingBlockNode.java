@@ -6,30 +6,32 @@ import de.blazemcworld.fireflow.code.type.PlayerType;
 import de.blazemcworld.fireflow.code.type.StringType;
 import de.blazemcworld.fireflow.code.type.VectorType;
 import de.blazemcworld.fireflow.code.value.PlayerValue;
-import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.craftbukkit.entity.CraftPlayer;
+import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
+
+import java.util.Optional;
 
 public class PlayerStandingBlockNode extends Node {
 
     public PlayerStandingBlockNode() {
-        super("player_standing_block", "Player Standing Block", "Checks if the player is standing on something or floating, and which block it is.", Items.BAMBOO_PRESSURE_PLATE);
+        super("player_standing_block", "Player Standing Block", "Checks if the player is standing on something or floating, and which block it is.", Material.BAMBOO_PRESSURE_PLATE);
 
         Input<PlayerValue> player = new Input<>("player", "Player", PlayerType.INSTANCE);
-        Output<Vec3d> position = new Output<>("position", "Position", VectorType.INSTANCE);
+        Output<Vector> position = new Output<>("position", "Position", VectorType.INSTANCE);
         Output<String> block = new Output<>("block", "Block", StringType.INSTANCE);
         Output<Boolean> floating = new Output<>("floating", "Floating", ConditionType.INSTANCE);
 
         position.valueFrom((ctx) -> player.getValue(ctx).tryGet(ctx, p ->
-                new Vec3d(p.supportingBlockPos.orElse(BlockPos.ORIGIN)), Vec3d.ZERO
+                supportingPos(p).orElse(p.getLocation()).toVector(), new Vector()
         ));
 
-        block.valueFrom((ctx) -> player.getValue(ctx).tryGet(ctx, p -> p.supportingBlockPos
-                .map(pos -> Registries.BLOCK.getId(ctx.evaluator.world.getBlockState(pos).getBlock()).getPath()).orElse("unknown"), "unknown"
+        block.valueFrom((ctx) -> player.getValue(ctx).tryGet(ctx, p -> supportingPos(p).map(l -> l.getBlock().getType().key().value()).orElse("unknown"), "unknown"
         ));
 
-        floating.valueFrom((ctx) -> player.getValue(ctx).tryGet(ctx, p -> p.supportingBlockPos.isEmpty(), false));
+        floating.valueFrom((ctx) -> player.getValue(ctx).tryGet(ctx, p -> supportingPos(p).isEmpty(), false));
     }
 
     @Override
@@ -37,4 +39,7 @@ public class PlayerStandingBlockNode extends Node {
         return new PlayerStandingBlockNode();
     }
 
+    private static Optional<Location> supportingPos(Player player) {
+        return ((CraftPlayer) player).getHandle().mainSupportingBlockPos.map(b -> new Location(player.getWorld(), b.getX(), b.getY(), b.getZ()));
+    }
 }

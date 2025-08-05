@@ -1,0 +1,6 @@
+web-port: 8008
+spawn-pos:
+  x: 0.5
+  y: 0
+  z: 0.5
+worldedit-group: build-fawe

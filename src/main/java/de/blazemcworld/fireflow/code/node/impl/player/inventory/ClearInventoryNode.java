@@ -4,11 +4,11 @@ import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.PlayerType;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.value.PlayerValue;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class ClearInventoryNode extends Node {
     public ClearInventoryNode() {
-        super("clear_inventory", "Clear Inventory", "Clears the player's inventory", Items.FILLED_MAP);
+        super("clear_inventory", "Clear Inventory", "Clears the player's inventory", Material.FILLED_MAP);
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
         Input<PlayerValue> player = new Input<>("player", "Player", PlayerType.INSTANCE);
         Output<Void> next = new Output<>("next", "Next", SignalType.INSTANCE);

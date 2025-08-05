@@ -6,13 +6,13 @@ import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.PlayerType;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.value.PlayerValue;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.Material;
 
 public class SetPlayerSlotItemNode extends Node {
 
     public SetPlayerSlotItemNode() {
-        super("set_player_slot_item", "Set Player Slot Item", "Changes the item in a player's inventory slot", Items.SMOOTH_STONE);
+        super("set_player_slot_item", "Set Player Slot Item", "Changes the item in a player's inventory slot", Material.SMOOTH_STONE);
 
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
         Input<PlayerValue> player = new Input<>("player", "Player", PlayerType.INSTANCE);
@@ -23,8 +23,8 @@ public class SetPlayerSlotItemNode extends Node {
         signal.onSignal((ctx) -> {
             player.getValue(ctx).tryUse(ctx, p -> {
                 int s = slot.getValue(ctx).intValue();
-                if (s < 0 || s >= p.getInventory().size()) return;
-                p.getInventory().setStack(s, item.getValue(ctx));
+                if (s < 0 || s >= p.getInventory().getSize()) return;
+                p.getInventory().setItem(s, item.getValue(ctx));
             });
             ctx.sendSignal(next);
         });

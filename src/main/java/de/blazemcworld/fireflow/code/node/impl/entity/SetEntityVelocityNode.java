@@ -5,17 +5,17 @@ import de.blazemcworld.fireflow.code.type.EntityType;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.type.VectorType;
 import de.blazemcworld.fireflow.code.value.EntityValue;
-import net.minecraft.item.Items;
-import net.minecraft.util.math.Vec3d;
+import org.bukkit.Material;
+import org.bukkit.util.Vector;
 
 public class SetEntityVelocityNode extends Node {
 
     public SetEntityVelocityNode() {
-        super("set_entity_velocity", "Set Entity Velocity", "Sets the current motion of an entity.", Items.ARROW);
+        super("set_entity_velocity", "Set Entity Velocity", "Sets the current motion of an entity.", Material.ARROW);
 
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
         Input<EntityValue> entity = new Input<>("entity", "Entity", EntityType.INSTANCE);
-        Input<Vec3d> velocity = new Input<>("velocity", "Velocity", VectorType.INSTANCE);
+        Input<Vector> velocity = new Input<>("velocity", "Velocity", VectorType.INSTANCE);
         Output<Void> next = new Output<>("next", "Next", SignalType.INSTANCE);
 
         signal.onSignal((ctx) -> {

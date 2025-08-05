@@ -4,12 +4,12 @@ import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.node.SingleGenericNode;
 import de.blazemcworld.fireflow.code.type.ConditionType;
 import de.blazemcworld.fireflow.code.type.WireType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class ValuesEqualNode<T> extends SingleGenericNode<T> {
 
     public ValuesEqualNode(WireType<T> type) {
-        super("values_equal", "Values Equal", "Checks if all values are equal.", Items.COMPARATOR, type);
+        super("values_equal", "Values Equal", "Checks if all values are equal.", Material.COMPARATOR, type);
 
         Input<T> primary = new Input<>("primary", "Primary", type);
         Varargs<T> others = new Varargs<>("others", "Others", type);

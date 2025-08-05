@@ -4,13 +4,12 @@ import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.PlayerType;
 import de.blazemcworld.fireflow.code.type.StringType;
 import de.blazemcworld.fireflow.code.value.PlayerValue;
-import net.minecraft.item.Items;
-
 import java.util.UUID;
+import org.bukkit.Material;
 
 public class PlayerFromUUIDNode extends Node {
     public PlayerFromUUIDNode() {
-        super("player_from_uuid", "Player From UUID", "Gets a player based on their UUID", Items.SKELETON_SKULL);
+        super("player_from_uuid", "Player From UUID", "Gets a player based on their UUID", Material.SKELETON_SKULL);
 
         Input<String> uuid = new Input<>("uuid", "UUID", StringType.INSTANCE);
         Output<PlayerValue> player = new Output<>("player", "Player", PlayerType.INSTANCE);

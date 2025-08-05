@@ -3,19 +3,19 @@ package de.blazemcworld.fireflow.code.node.impl.position;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.PositionType;
-import de.blazemcworld.fireflow.code.value.Position;
-import net.minecraft.item.Items;
+import org.bukkit.Location;
+import org.bukkit.Material;
 
 public class PositionDistanceNode extends Node {
 
     public PositionDistanceNode() {
-        super("position_distance", "Position Distance", "Returns the distance between two positions", Items.DIAMOND);
+        super("position_distance", "Position Distance", "Returns the distance between two positions", Material.DIAMOND);
 
-        Input<Position> aPos = new Input<>("a", "A", PositionType.INSTANCE);
-        Input<Position> bPos = new Input<>("b", "B", PositionType.INSTANCE);
+        Input<Location> aPos = new Input<>("a", "A", PositionType.INSTANCE);
+        Input<Location> bPos = new Input<>("b", "B", PositionType.INSTANCE);
         Output<Double> distance = new Output<>("distance", "Distance", NumberType.INSTANCE);
 
-        distance.valueFrom(ctx -> aPos.getValue(ctx).xyz().distanceTo(bPos.getValue(ctx).xyz()));
+        distance.valueFrom(ctx -> aPos.getValue(ctx).distance(bPos.getValue(ctx)));
     }
 
     @Override

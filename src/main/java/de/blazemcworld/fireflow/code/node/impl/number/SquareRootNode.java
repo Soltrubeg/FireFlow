@@ -2,12 +2,12 @@ package de.blazemcworld.fireflow.code.node.impl.number;
 
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.NumberType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class SquareRootNode extends Node {
 
     public SquareRootNode() {
-        super("square_root", "Square Root", "Calculates the square root of a number", Items.BEETROOT);
+        super("square_root", "Square Root", "Calculates the square root of a number", Material.BEETROOT);
 
         Input<Double> number = new Input<>("number", "Number", NumberType.INSTANCE);
         Output<Double> result = new Output<>("result", "Result", NumberType.INSTANCE);

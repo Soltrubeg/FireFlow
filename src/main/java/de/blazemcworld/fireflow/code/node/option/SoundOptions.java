@@ -5,13 +5,10 @@ import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.widget.ChoiceWidget;
 import de.blazemcworld.fireflow.code.widget.NodeIOWidget;
 import de.blazemcworld.fireflow.code.widget.WidgetVec;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class SoundOptions implements InputOptions {
@@ -20,10 +17,9 @@ public class SoundOptions implements InputOptions {
     private final List<String> soundIds = new ArrayList<>();
 
     private SoundOptions() {
-        for (Identifier id : Registries.SOUND_EVENT.getIds()) {
-            soundIds.add(id.getPath());
+        for (Iterator<NamespacedKey> it = Registry.SOUNDS.keyStream().iterator(); it.hasNext(); ) {
+            soundIds.add(it.next().value());
         }
-        soundIds.remove("intentionally_empty");
     }
 
     @Override

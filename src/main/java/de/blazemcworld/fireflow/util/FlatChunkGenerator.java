@@ -1,45 +1,19 @@
 package de.blazemcworld.fireflow.util;
 
-import de.blazemcworld.fireflow.FireFlow;
-import net.minecraft.block.Blocks;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.entry.RegistryEntryList;
-import net.minecraft.world.biome.BiomeKeys;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.gen.StructureAccessor;
-import net.minecraft.world.gen.chunk.Blender;
-import net.minecraft.world.gen.chunk.FlatChunkGeneratorConfig;
-import net.minecraft.world.gen.noise.NoiseConfig;
+import org.bukkit.Material;
+import org.bukkit.generator.ChunkGenerator;
+import org.bukkit.generator.WorldInfo;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
+import java.util.Random;
 
-public class FlatChunkGenerator extends net.minecraft.world.gen.chunk.FlatChunkGenerator {
-    public FlatChunkGenerator() {
-        super(new FlatChunkGeneratorConfig(
-                Optional.of(RegistryEntryList.empty()),
-                FireFlow.server.getCombinedDynamicRegistries().getCombinedRegistryManager()
-                        .getOrThrow(RegistryKeys.BIOME).getOrThrow(BiomeKeys.PLAINS),
-                List.of()
-        ));
-        for (int i = 0; i < 59; i++) {
-            getConfig().getLayerBlocks().add(Blocks.AIR.getDefaultState());
-        }
-        getConfig().getLayerBlocks().addAll(List.of(
-                Blocks.BEDROCK.getDefaultState(),
-                Blocks.DIRT.getDefaultState(),
-                Blocks.DIRT.getDefaultState(),
-                Blocks.DIRT.getDefaultState(),
-                Blocks.GRASS_BLOCK.getDefaultState()
-        ));
-    }
+public class FlatChunkGenerator extends ChunkGenerator {
 
     @Override
-    public CompletableFuture<Chunk> populateNoise(Blender blender, NoiseConfig noiseConfig, StructureAccessor structureAccessor, Chunk chunk) {
-        if (chunk.getPos().x < -32 || chunk.getPos().x >= 32 || chunk.getPos().z < -32 || chunk.getPos().z >= 32) {
-            return CompletableFuture.completedFuture(chunk);
-        }
-        return super.populateNoise(blender, noiseConfig, structureAccessor, chunk);
+    public void generateBedrock(@NotNull WorldInfo worldInfo, @NotNull Random random, int chunkX, int chunkZ, @NotNull ChunkData chunkData) {
+        if (chunkX >= 32 || chunkX < -32 || chunkZ >= 32 || chunkZ < -32) return;
+        chunkData.setRegion(0, -2, 0, 16, -1, 16, Material.GRASS_BLOCK);
+        chunkData.setRegion(0, -5, 0, 16, -2, 16, Material.DIRT);
+        chunkData.setRegion(0, -6, 0, 16, -5, 16, Material.BEDROCK);
     }
 }

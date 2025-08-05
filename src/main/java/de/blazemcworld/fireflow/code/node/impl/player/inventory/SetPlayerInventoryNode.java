@@ -4,13 +4,14 @@ import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.*;
 import de.blazemcworld.fireflow.code.value.ListValue;
 import de.blazemcworld.fireflow.code.value.PlayerValue;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.Material;
 
 public class SetPlayerInventoryNode extends Node {
 
     public SetPlayerInventoryNode() {
-        super("set_player_inventory", "Set Player Inventory", "Changes the entire inventory of a player", Items.WATER_BUCKET);
+        super("set_player_inventory", "Set Player Inventory", "Changes the entire inventory of a player", Material.WATER_BUCKET);
 
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
         Input<PlayerValue> player = new Input<>("player", "Player", PlayerType.INSTANCE);
@@ -22,14 +23,19 @@ public class SetPlayerInventoryNode extends Node {
         signal.onSignal((ctx) -> {
             player.getValue(ctx).tryUse(ctx, p -> {
                 boolean clearInv = behaviour.getValue(ctx).equals("Clear");
-                if (clearInv) p.getInventory().clear();
+                if (clearInv) {
+                    p.getInventory().clear();
+                    if (p.getOpenInventory().getType() == InventoryType.CRAFTING) {
+                        p.getOpenInventory().getTopInventory().clear();
+                    }
+                }
 
                 ListValue<ItemStack> items = contents.getValue(ctx);
-                int stop = Math.min(items.size(), p.getInventory().size());
+                int stop = Math.min(items.size(), p.getInventory().getSize());
                 for (int slot = 0; slot < stop; slot++) {
                     ItemStack replacement = items.get(slot);
                     if (!clearInv && replacement.isEmpty()) continue;
-                    p.getInventory().setStack(slot, replacement);
+                    p.getInventory().setItem(slot, replacement);
                 }
             });
             ctx.sendSignal(next);

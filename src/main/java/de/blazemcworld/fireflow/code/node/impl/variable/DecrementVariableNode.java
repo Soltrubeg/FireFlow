@@ -5,11 +5,11 @@ import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.type.StringType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class DecrementVariableNode extends Node {
     public DecrementVariableNode() {
-        super("decrement_variable", "Decrement Variable", "Decreases the value of a number variable by one.", Items.WOODEN_HOE);
+        super("decrement_variable", "Decrement Variable", "Decreases the value of a number variable by one.", Material.WOODEN_HOE);
 
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
         Input<String> name = new Input<>("name", "Name", StringType.INSTANCE);

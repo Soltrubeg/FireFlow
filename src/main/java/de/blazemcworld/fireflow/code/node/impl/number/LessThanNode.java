@@ -3,12 +3,12 @@ package de.blazemcworld.fireflow.code.node.impl.number;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.ConditionType;
 import de.blazemcworld.fireflow.code.type.NumberType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class LessThanNode extends Node {
 
     public LessThanNode() {
-        super("less_than", "Less Than", "Checks if the left number is less than the right number", Items.APPLE);
+        super("less_than", "Less Than", "Checks if the left number is less than the right number", Material.APPLE);
 
         Input<Double> left = new Input<>("left", "Left", NumberType.INSTANCE);
         Input<Double> right = new Input<>("right", "Right", NumberType.INSTANCE);

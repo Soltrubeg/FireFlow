@@ -2,12 +2,12 @@ package de.blazemcworld.fireflow.code.node.impl.condition;
 
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.ConditionType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class ConditionAndNode extends Node {
 
     public ConditionAndNode() {
-        super("conditional_and", "Conditional And", "Checks if all conditions are true.", Items.REDSTONE_BLOCK);
+        super("conditional_and", "Conditional And", "Checks if all conditions are true.", Material.REDSTONE_BLOCK);
 
         Input<Boolean> primary = new Input<>("primary", "Primary", ConditionType.INSTANCE);
         Varargs<Boolean> others = new Varargs<>("others", "Others", ConditionType.INSTANCE);

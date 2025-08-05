@@ -1,6 +1,6 @@
 <img alt="FireFlow" src="https://i.imgur.com/rrpYQ5s.png" style="height: 8rem" />
 
-FireFlow is a serverside only Minecraft [Fabric](https://fabricmc.net/) mod, that introduces a visual coding system, allowing you to easily create your own minigames.
+FireFlow is a Minecraft Server Plugin, using [Paper](https://papermc.io/), with the goal to provide a beginner-friendly coding experience by having a flow-chart based system.
 
 ![Example Code](https://github.com/user-attachments/assets/5d3fe0c1-d4a7-4137-bb5a-bdeb18b99e2c)
 

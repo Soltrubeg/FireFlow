@@ -3,12 +3,12 @@ package de.blazemcworld.fireflow.code.node.impl.number;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.ConditionType;
 import de.blazemcworld.fireflow.code.type.NumberType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class GreaterEqualNode extends Node {
 
     public GreaterEqualNode() {
-        super("greater_equal", "Greater or Equal", "Checks if the left number is greater than or equal to the right number", Items.SUGAR);
+        super("greater_equal", "Greater or Equal", "Checks if the left number is greater than or equal to the right number", Material.SUGAR);
 
         Input<Double> left = new Input<>("left", "Left", NumberType.INSTANCE);
         Input<Double> right = new Input<>("right", "Right", NumberType.INSTANCE);

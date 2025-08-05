@@ -5,10 +5,9 @@ import de.blazemcworld.fireflow.code.node.SingleGenericNode;
 import de.blazemcworld.fireflow.code.type.ListType;
 import de.blazemcworld.fireflow.code.type.WireType;
 import de.blazemcworld.fireflow.code.value.ListValue;
-import net.minecraft.item.Items;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.bukkit.Material;
 
 public class FlattenListNode<T> extends SingleGenericNode<T> {
 
@@ -17,7 +16,7 @@ public class FlattenListNode<T> extends SingleGenericNode<T> {
             "flatten_list",
             type == null ? "Flatten List" : "Flatten " + type.getName() + " List",
             "Flattens a list of lists into a single list.",
-            Items.PURPUR_SLAB,
+            Material.PURPUR_SLAB,
             type
         );
 

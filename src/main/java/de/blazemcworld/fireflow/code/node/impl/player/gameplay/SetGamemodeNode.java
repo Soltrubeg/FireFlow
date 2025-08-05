@@ -5,12 +5,12 @@ import de.blazemcworld.fireflow.code.type.PlayerType;
 import de.blazemcworld.fireflow.code.type.SignalType;
 import de.blazemcworld.fireflow.code.type.StringType;
 import de.blazemcworld.fireflow.code.value.PlayerValue;
-import net.minecraft.item.Items;
-import net.minecraft.world.GameMode;
+import org.bukkit.GameMode;
+import org.bukkit.Material;
 
 public class SetGamemodeNode extends Node {
     public SetGamemodeNode() {
-        super("set_gamemode", "Set Gamemode", "Sets the gamemode of the player", Items.DIAMOND);
+        super("set_gamemode", "Set Gamemode", "Sets the gamemode of the player", Material.DIAMOND);
         Input<Void> signal = new Input<>("signal", "Signal", SignalType.INSTANCE);
 
         Input<PlayerValue> player = new Input<>("player", "Player", PlayerType.INSTANCE);
@@ -27,7 +27,7 @@ public class SetGamemodeNode extends Node {
                     case "Spectator" -> GameMode.SPECTATOR;
                     default -> null;
                 };
-                if (mode != null) p.changeGameMode(mode);
+                if (mode != null) p.setGameMode(mode);
             });
             ctx.sendSignal(next);
         });

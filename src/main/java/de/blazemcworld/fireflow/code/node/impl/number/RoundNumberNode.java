@@ -3,11 +3,11 @@ package de.blazemcworld.fireflow.code.node.impl.number;
 import de.blazemcworld.fireflow.code.node.Node;
 import de.blazemcworld.fireflow.code.type.NumberType;
 import de.blazemcworld.fireflow.code.type.StringType;
-import net.minecraft.item.Items;
+import org.bukkit.Material;
 
 public class RoundNumberNode extends Node {
     public RoundNumberNode() {
-        super("round_number", "Round Number", "Rounds a number according to specified mode and decimal places", Items.DISPENSER);
+        super("round_number", "Round Number", "Rounds a number according to specified mode and decimal places", Material.DISPENSER);
         Input<Double> value = new Input<>("value", "Value", NumberType.INSTANCE);
         Input<String> mode = new Input<>("mode", "Mode", StringType.INSTANCE).options("Round", "Floor", "Ceiling");
         Input<Double> decimal_place = new Input<>("decimal_place", "Decimal Place", NumberType.INSTANCE);

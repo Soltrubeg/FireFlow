@@ -2,44 +2,43 @@ package de.blazemcworld.fireflow.code.type;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import de.blazemcworld.fireflow.code.value.Position;
-import net.minecraft.item.Items;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.Vec3d;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.util.Vector;
 
-public class VectorType extends WireType<Vec3d> {
+public class VectorType extends WireType<Vector> {
 
     public static final VectorType INSTANCE = new VectorType();
 
     private VectorType() {
-        super("vector", TextColor.fromFormatting(Formatting.RED), Items.ARROW);
+        super("vector", NamedTextColor.RED, Material.ARROW);
     }
 
     @Override
-    public Vec3d defaultValue() {
-        return Vec3d.ZERO;
+    public Vector defaultValue() {
+        return new Vector();
     }
 
     @Override
-    public Vec3d checkType(Object obj) {
-        if (obj instanceof Vec3d p) return p;
+    public Vector checkType(Object obj) {
+        if (obj instanceof Vector p) return p;
         return null;
     }
 
     @Override
-    public JsonElement toJson(Vec3d vec) {
+    public JsonElement toJson(Vector vec) {
         JsonObject out = new JsonObject();
-        out.addProperty("x", vec.x);
-        out.addProperty("y", vec.y);
-        out.addProperty("z", vec.z);
+        out.addProperty("x", vec.getX());
+        out.addProperty("y", vec.getY());
+        out.addProperty("z", vec.getZ());
         return out;
     }
 
     @Override
-    public Vec3d fromJson(JsonElement json) {
+    public Vector fromJson(JsonElement json) {
         JsonObject obj = json.getAsJsonObject();
-        return new Vec3d(
+        return new Vector(
                 obj.get("x").getAsDouble(),
                 obj.get("y").getAsDouble(),
                 obj.get("z").getAsDouble()
@@ -52,20 +51,18 @@ public class VectorType extends WireType<Vec3d> {
     }
 
     @Override
-    public boolean valuesEqual(Vec3d a, Vec3d b) {
+    public boolean valuesEqual(Vector a, Vector b) {
         return a.equals(b);
     }
 
     @Override
-    protected String stringifyInternal(Vec3d value, String mode) {
+    protected String stringifyInternal(Vector value, String mode) {
         return switch (mode) {
-            case "x" -> "%.2f".formatted(value.x);
-            case "y" -> "%.2f".formatted(value.y);
-            case "z" -> "%.2f".formatted(value.z);
+            case "x" -> "%.2f".formatted(value.getX());
+            case "y" -> "%.2f".formatted(value.getY());
+            case "z" -> "%.2f".formatted(value.getZ());
             default -> "<%.2f, %.2f, %.2f>".formatted(
-                    value.x,
-                    value.y,
-                    value.z
+                    value.getX(), value.getY(), value.getZ()
             );
         };
     }
@@ -76,9 +73,9 @@ public class VectorType extends WireType<Vec3d> {
     }
 
     @Override
-    protected Vec3d convertInternal(WireType<?> other, Object v) {
-        if (other == PositionType.INSTANCE && v instanceof Position pos) {
-            return pos.xyz();
+    protected Vector convertInternal(WireType<?> other, Object v) {
+        if (other == PositionType.INSTANCE && v instanceof Location pos) {
+            return pos.toVector();
         }
         return super.convertInternal(other, v);
     }
